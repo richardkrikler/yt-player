@@ -1,5 +1,5 @@
 import { db, sqlite } from '../db'
-import { videos, playlistItems, userPlaylists, playlistShares } from '../db/schema'
+import { videos, playlistItems, playlists, userPlaylists, playlistShares } from '../db/schema'
 import { eq, and, inArray } from 'drizzle-orm'
 import { requireAuth } from '../utils/requireRole'
 
@@ -28,9 +28,10 @@ export default defineEventHandler(async (event) => {
       if (!shared) throw createError({ statusCode: 403, message: 'Access denied' })
     }
 
-    return db.select({ item: playlistItems, video: videos })
+    return db.select({ item: playlistItems, video: videos, playlist: playlists })
       .from(playlistItems)
       .innerJoin(videos, eq(playlistItems.videoId, videos.id))
+      .innerJoin(playlists, eq(playlistItems.playlistId, playlists.id))
       .where(and(eq(playlistItems.playlistId, playlist), inArray(videos.id, videoIds)))
   }
 
@@ -48,9 +49,10 @@ export default defineEventHandler(async (event) => {
 
   if (accessibleIds.length === 0) return []
 
-  return db.select({ item: playlistItems, video: videos })
+  return db.select({ item: playlistItems, video: videos, playlist: playlists })
     .from(playlistItems)
     .innerJoin(videos, eq(playlistItems.videoId, videos.id))
+    .innerJoin(playlists, eq(playlistItems.playlistId, playlists.id))
     .where(and(
       inArray(playlistItems.playlistId, accessibleIds),
       inArray(videos.id, videoIds),
