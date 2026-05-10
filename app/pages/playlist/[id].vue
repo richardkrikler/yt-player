@@ -3,8 +3,14 @@ const route = useRoute()
 const playlistId = computed(() => route.params.id as string)
 const { query: searchQuery, results: searchResults, loading: searchLoading } = useSearch(playlistId)
 
-const { videos, currentVideo, currentIndex, loading, loadVideos, play, next, previous, random } = usePlayer(playlistId)
+const {
+  videos, currentVideo, currentIndex,
+  loading, loadingMore, hasMore,
+  loadVideos, loadMore, play, next, previous, random,
+} = usePlayer(playlistId)
+
 const showShare = ref(false)
+const sentinel = ref<HTMLElement | null>(null)
 
 const activeVideo = computed(() => currentVideo.value?.video ?? currentVideo.value)
 
@@ -12,12 +18,22 @@ const { data: playlist } = await useFetch(`/api/playlists/${playlistId.value}`)
 
 onMounted(async () => {
   await loadVideos()
-  // auto-play video from query param if provided
+
   const videoId = route.query.videoId as string | undefined
   if (videoId) {
     const match = videos.value.find(r => r.video?.id === videoId)
     if (match) play(match)
   }
+
+  const observer = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) loadMore()
+  }, { rootMargin: '200px' })
+
+  watchEffect(() => {
+    if (sentinel.value) observer.observe(sentinel.value)
+  })
+
+  onUnmounted(() => observer.disconnect())
 })
 
 const displayVideos = computed(() =>
@@ -45,7 +61,7 @@ const displayVideos = computed(() =>
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
       <!-- Player -->
       <div>
-        <div v-if="activeVideo" >
+        <div v-if="activeVideo">
           <PlayerIframe
             :video-id="activeVideo.id"
             :title="activeVideo.title"
@@ -86,6 +102,10 @@ const displayVideos = computed(() =>
             :active-video-id="activeVideo?.id"
             @play="play"
           />
+          <div ref="sentinel" class="h-1" />
+          <div v-if="loadingMore" class="text-center py-3 text-sm text-gray-400">
+            Loading more…
+          </div>
         </div>
       </div>
     </div>
