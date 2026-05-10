@@ -284,10 +284,11 @@ yt-player/
 
 ## Cache Behaviour
 
-| Data | TTL | Force-refresh |
-|---|---|---|
-| Playlist metadata (title, count) | 24 hours | Refresh button on playlist card |
-| Full video list | 6 hours | Fetch button on playlist card / playlist page |
-| Individual video metadata | 7 days | Triggered when video list is refreshed |
+There is no automatic cache expiry. All data is fetched on demand and stored indefinitely until the user explicitly refreshes it.
 
-Cache is lazy — nothing is fetched in the background. All refreshes are user-triggered.
+| Data | How to refresh |
+|---|---|
+| Playlist metadata (title, count) | Refresh button on playlist card |
+| Full video list + video metadata | Fetch button on playlist card / playlist page |
+
+Nothing is fetched in the background.

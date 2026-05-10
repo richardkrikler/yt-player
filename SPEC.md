@@ -231,7 +231,6 @@ yt-player/
 │   │   └── index.ts        # DB connection singleton
 │   ├── services/
 │   │   ├── youtube.ts      # YouTube Data API v3 wrapper
-│   │   ├── cache.ts        # Cache TTL logic, force-refresh
 │   │   └── crypto.ts       # AES-256 token encryption/decryption
 │   └── middleware/
 │       └── auth.ts         # Session + role guards
@@ -329,13 +328,14 @@ yt-player/
 
 ## Cache Strategy
 
-| Data | Default TTL | Force-refresh |
-|---|---|---|
-| Playlist metadata (title, count) | 24 hours | `POST /api/playlists/:id/refresh` |
-| Full video list | 6 hours | `POST /api/playlists/:id/fetch-videos` |
-| Individual video metadata | 7 days | Triggered when video list is refreshed |
+There is no automatic expiry. All cached data persists indefinitely until the user explicitly refreshes it.
 
-Cache age is determined by `metadata_cached_at` / `videos_cached_at` timestamps on the `playlists` row. No background jobs — refresh is always user- or admin-triggered.
+| Data | How to refresh |
+|---|---|
+| Playlist metadata (title, count) | `POST /api/playlists/:id/refresh` |
+| Full video list + video metadata | `POST /api/playlists/:id/fetch-videos` |
+
+`metadata_cached_at` / `videos_cached_at` timestamps on the `playlists` row record when data was last fetched. No background jobs.
 
 ---
 
