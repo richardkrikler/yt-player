@@ -12,10 +12,10 @@ export default defineEventHandler(async (event) => {
   }
 
   const ftsRows = sqlite.prepare(
-    `SELECT video_id FROM videos_fts WHERE videos_fts MATCH ? ORDER BY rank LIMIT 50`,
-  ).all(q.trim() + '*') as { video_id: string }[]
+    `SELECT id FROM videos_fts WHERE videos_fts MATCH ? ORDER BY rank LIMIT 50`,
+  ).all(q.trim() + '*') as { id: string }[]
 
-  const videoIds = ftsRows.map(r => r.video_id)
+  const videoIds = ftsRows.map(r => r.id)
   if (videoIds.length === 0) return []
 
   if (playlist && typeof playlist === 'string') {

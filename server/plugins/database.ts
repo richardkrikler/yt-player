@@ -68,9 +68,18 @@ export default defineNitroPlugin(() => {
       position INTEGER NOT NULL,
       added_at INTEGER
     );
+  `)
 
-    CREATE VIRTUAL TABLE IF NOT EXISTS videos_fts USING fts5(
-      video_id UNINDEXED,
+  // FTS5 — always drop and recreate so column names stay in sync with the
+  // content table. 'rebuild' repopulates from existing videos rows.
+  sqlite.exec(`
+    DROP TRIGGER IF EXISTS videos_fts_insert;
+    DROP TRIGGER IF EXISTS videos_fts_delete;
+    DROP TRIGGER IF EXISTS videos_fts_update;
+    DROP TABLE IF EXISTS videos_fts;
+
+    CREATE VIRTUAL TABLE videos_fts USING fts5(
+      id UNINDEXED,
       title,
       description,
       tags,
@@ -79,20 +88,22 @@ export default defineNitroPlugin(() => {
       content_rowid='rowid'
     );
 
-    CREATE TRIGGER IF NOT EXISTS videos_fts_insert AFTER INSERT ON videos BEGIN
-      INSERT INTO videos_fts(rowid, video_id, title, description, tags, channel_title)
+    INSERT INTO videos_fts(videos_fts) VALUES('rebuild');
+
+    CREATE TRIGGER videos_fts_insert AFTER INSERT ON videos BEGIN
+      INSERT INTO videos_fts(rowid, id, title, description, tags, channel_title)
       VALUES (new.rowid, new.id, new.title, new.description, new.tags, new.channel_title);
     END;
 
-    CREATE TRIGGER IF NOT EXISTS videos_fts_delete AFTER DELETE ON videos BEGIN
-      INSERT INTO videos_fts(videos_fts, rowid, video_id, title, description, tags, channel_title)
+    CREATE TRIGGER videos_fts_delete AFTER DELETE ON videos BEGIN
+      INSERT INTO videos_fts(videos_fts, rowid, id, title, description, tags, channel_title)
       VALUES ('delete', old.rowid, old.id, old.title, old.description, old.tags, old.channel_title);
     END;
 
-    CREATE TRIGGER IF NOT EXISTS videos_fts_update AFTER UPDATE ON videos BEGIN
-      INSERT INTO videos_fts(videos_fts, rowid, video_id, title, description, tags, channel_title)
+    CREATE TRIGGER videos_fts_update AFTER UPDATE ON videos BEGIN
+      INSERT INTO videos_fts(videos_fts, rowid, id, title, description, tags, channel_title)
       VALUES ('delete', old.rowid, old.id, old.title, old.description, old.tags, old.channel_title);
-      INSERT INTO videos_fts(rowid, video_id, title, description, tags, channel_title)
+      INSERT INTO videos_fts(rowid, id, title, description, tags, channel_title)
       VALUES (new.rowid, new.id, new.title, new.description, new.tags, new.channel_title);
     END;
   `)

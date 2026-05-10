@@ -4,36 +4,74 @@ const playlistId = computed(() => route.params.id as string)
 const { query: searchQuery, results: searchResults, loading: searchLoading } = useSearch(playlistId)
 
 const {
-  videos, currentVideo, currentIndex,
-  loading, loadingMore, hasMore,
-  loadVideos, loadMore, play, next, previous, random,
+  videos, currentVideo, currentPosition,
+  loading, loadingMore, hasPrevPage, hasNextPage,
+  loadVideos, loadNextPage, loadPrevPage, seekToVideo, play, next, previous, random,
 } = usePlayer(playlistId)
 
 const showShare = ref(false)
-const sentinel = ref<HTMLElement | null>(null)
+const listContainer = ref<HTMLElement | null>(null)
+const topSentinel = ref<HTMLElement | null>(null)
+const bottomSentinel = ref<HTMLElement | null>(null)
 
 const activeVideo = computed(() => currentVideo.value?.video ?? currentVideo.value)
 
 const { data: playlist } = await useFetch(`/api/playlists/${playlistId.value}`)
 
+async function scrollToActive() {
+  await nextTick()
+  listContainer.value
+    ?.querySelector('[aria-current="true"]')
+    ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
+
+async function handleLoadPrev() {
+  const container = listContainer.value
+  if (!container || !hasPrevPage.value) return
+  const heightBefore = container.scrollHeight
+  await loadPrevPage()
+  await nextTick()
+  container.scrollTop += container.scrollHeight - heightBefore
+}
+
 onMounted(async () => {
   await loadVideos()
 
-  const videoId = route.query.videoId as string | undefined
-  if (videoId) {
-    const match = videos.value.find(r => r.video?.id === videoId)
-    if (match) play(match)
+  const initialVideoId = (route.params.videoId as string) || (route.query.videoId as string) || undefined
+  if (initialVideoId) {
+    await seekToVideo(initialVideoId)
+    await scrollToActive()
   }
 
-  const observer = new IntersectionObserver(entries => {
-    if (entries[0].isIntersecting) loadMore()
-  }, { rootMargin: '200px' })
+  await nextTick()
+  const container = listContainer.value!
 
-  watchEffect(() => {
-    if (sentinel.value) observer.observe(sentinel.value)
-  })
+  const topObs = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) handleLoadPrev()
+  }, { root: container, rootMargin: '150px' })
 
-  onUnmounted(() => observer.disconnect())
+  const bottomObs = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) loadNextPage()
+  }, { root: container, rootMargin: '150px' })
+
+  if (topSentinel.value) topObs.observe(topSentinel.value)
+  if (bottomSentinel.value) bottomObs.observe(bottomSentinel.value)
+
+  onUnmounted(() => { topObs.disconnect(); bottomObs.disconnect() })
+})
+
+const router = useRouter()
+
+// Sync the URL with the playing video. Because the alias maps to the same
+// component, router.replace does not remount — it only updates the route.
+watch(currentVideo, async (video) => {
+  const vid = video?.video?.id
+  await router.replace(
+    vid
+      ? { path: `/playlist/${playlistId.value}/${vid}` }
+      : { path: `/playlist/${playlistId.value}` },
+  )
+  await scrollToActive()
 })
 
 const displayVideos = computed(() =>
@@ -96,16 +134,15 @@ const displayVideos = computed(() =>
           <p>No videos cached yet.</p>
         </div>
 
-        <div v-else class="overflow-y-auto max-h-[calc(100vh-12rem)]">
+        <div v-else ref="listContainer" class="overflow-y-auto max-h-[calc(100vh-12rem)]">
+          <div ref="topSentinel" class="h-1" />
+          <div v-if="loadingMore" class="text-center py-2 text-xs text-gray-400">Loading…</div>
           <VideoList
             :videos="displayVideos"
             :active-video-id="activeVideo?.id"
             @play="play"
           />
-          <div ref="sentinel" class="h-1" />
-          <div v-if="loadingMore" class="text-center py-3 text-sm text-gray-400">
-            Loading more…
-          </div>
+          <div ref="bottomSentinel" class="h-1" />
         </div>
       </div>
     </div>
