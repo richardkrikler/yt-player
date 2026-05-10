@@ -1,5 +1,6 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'auth' })
+useHead({ title: 'Login' })
 
 const { fetch: refreshSession } = useUserSession()
 const email = ref('')

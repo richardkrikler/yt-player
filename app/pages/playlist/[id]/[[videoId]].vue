@@ -22,6 +22,12 @@ const activeVideo = computed(() => currentVideo.value?.video ?? currentVideo.val
 
 const { data: playlist } = await useFetch(`/api/playlists/${playlistId.value}`)
 
+useHead(computed(() => ({
+  title: activeVideo.value?.title
+    ? `${activeVideo.value.title} · ${playlist.value?.title ?? 'Playlist'}`
+    : (playlist.value?.title ?? 'Playlist'),
+})))
+
 async function scrollToActive() {
   await nextTick()
   listContainer.value

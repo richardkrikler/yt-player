@@ -1,4 +1,5 @@
 <script setup lang="ts">
+useHead({ title: 'Settings' })
 const { user, fetch: refreshSession } = useUserSession()
 const route = useRoute()
 const justConnected = computed(() => route.query.connected === '1')

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+useHead({ title: 'Shared with me' })
 const { data: rows, pending } = await useFetch('/api/playlists/shared')
 </script>
 

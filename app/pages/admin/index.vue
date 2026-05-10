@@ -1,5 +1,6 @@
 <script setup lang="ts">
 definePageMeta({ middleware: 'admin' })
+useHead({ title: 'Admin' })
 
 const { data: users, refresh: refreshUsers } = await useFetch('/api/admin/users')
 const { data: playlists } = await useFetch('/api/admin/playlists')

@@ -14,6 +14,10 @@ export default defineNuxtConfig({
 
   app: {
     viewTransition: true,
+    head: {
+      titleTemplate: '%s — YT Player',
+      title: 'YT Player',
+    },
   },
 
   nitro: {

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+useHead({ title: 'My Playlists' })
 const { user } = useUserSession()
 const { playlists, loading, error, fetchPlaylists, importFromUrl, removePlaylist, refreshMetadata, fetchVideos } = usePlaylist()
 
