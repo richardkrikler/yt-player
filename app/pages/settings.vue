@@ -4,7 +4,7 @@ const route = useRoute()
 const justConnected = computed(() => route.query.connected === '1')
 
 async function disconnect() {
-  await $fetch('/api/auth/youtube', { method: 'DELETE' })
+  await $fetch('/api/youtube', { method: 'DELETE' })
   await refreshSession()
 }
 </script>
@@ -63,8 +63,7 @@ async function disconnect() {
         <UButton
           size="sm"
           icon="i-simple-icons-youtube"
-          tag="a"
-          href="/api/auth/youtube/connect"
+          @click="() => navigateTo('/api/youtube/connect', { external: true })"
         >
           Connect
         </UButton>

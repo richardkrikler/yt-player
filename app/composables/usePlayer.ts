@@ -19,7 +19,7 @@ export function usePlayer(playlistId: Ref<string>) {
 
   function play(video: any) {
     currentVideo.value = video
-    currentIndex.value = videos.value.findIndex(v => v.video.id === video.video?.id ?? video.id)
+    currentIndex.value = videos.value.findIndex(v => v.video.id === (video.video?.id ?? video.id))
   }
 
   function next() {

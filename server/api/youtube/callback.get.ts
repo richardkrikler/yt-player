@@ -1,7 +1,7 @@
-import { exchangeCode } from '../../../utils/youtube'
-import { encrypt } from '../../../utils/crypto'
-import { db } from '../../../db'
-import { users } from '../../../db/schema'
+import { exchangeCode } from '../../utils/youtube'
+import { encrypt } from '../../utils/crypto'
+import { db } from '../../db'
+import { users } from '../../db/schema'
 import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {

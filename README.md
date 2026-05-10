@@ -103,8 +103,8 @@ The **first account to register** is automatically assigned the `admin` role.
 1. **Credentials → Create Credentials → OAuth client ID**
 2. Application type: **Web application**
 3. Authorized redirect URIs:
-   - Local dev: `http://localhost:3000/api/auth/youtube/callback`
-   - Production: `https://YOUR_LOCAL_DOMAIN/api/auth/youtube/callback`
+   - Local dev: `http://localhost:3000/api/youtube/callback`
+   - Production: `https://YOUR_LOCAL_DOMAIN/api/youtube/callback`
 4. Copy **Client ID** and **Client Secret** → paste into `.env`
 
 ### 5. Create an API Key
@@ -158,7 +158,7 @@ cd /opt/yt-player
 
 cp .env.example .env
 nano .env
-# Set NUXT_GOOGLE_REDIRECT_URI=https://YOUR_LOCAL_DOMAIN/api/auth/youtube/callback
+# Set NUXT_GOOGLE_REDIRECT_URI=https://YOUR_LOCAL_DOMAIN/api/youtube/callback
 # Set DATABASE_URL=/app/data/yt-player.db
 
 mkdir -p /opt/yt-player/data
@@ -208,7 +208,7 @@ Install it as a trusted root CA on each device:
 ### 7. Update OAuth Redirect URI
 
 In Google Cloud Console → Credentials → your OAuth client → add:
-`https://YOUR_LOCAL_DOMAIN/api/auth/youtube/callback`
+`https://YOUR_LOCAL_DOMAIN/api/youtube/callback`
 
 ---
 

@@ -82,9 +82,9 @@ After logging in, users connect their Google/YouTube account from **Settings →
 | POST | `/api/auth/login` | Verify credentials, set session cookie |
 | POST | `/api/auth/logout` | Clear session |
 | GET | `/api/auth/me` | Current user info + role + YouTube connection status |
-| GET | `/api/auth/youtube/connect` | Start Google OAuth (YouTube scope); user must be logged in |
-| GET | `/api/auth/youtube/callback` | Handle OAuth callback, store encrypted tokens |
-| DELETE | `/api/auth/youtube` | Disconnect YouTube (nulls tokens in DB) |
+| GET | `/api/youtube/connect` | Start Google OAuth (YouTube scope); user must be logged in |
+| GET | `/api/youtube/callback` | Handle OAuth callback, store encrypted tokens |
+| DELETE | `/api/youtube` | Disconnect YouTube (nulls tokens in DB) |
 
 ---
 
@@ -367,7 +367,7 @@ Google OAuth here is used **only** to connect a YouTube account after login — 
 2. Application type: **Web application**
 3. Add **Authorized redirect URIs**:
    - Local: `http://localhost:3000/api/auth/google/callback`
-   - Production: `https://YOUR_LOCAL_DOMAIN/api/auth/youtube/callback`
+   - Production: `https://YOUR_LOCAL_DOMAIN/api/youtube/callback`
 4. Click **Create** — copy the **Client ID** and **Client Secret**
 
 ### 5. (Optional) Create an API Key for public playlist fallback
@@ -412,7 +412,7 @@ NUXT_TOKEN_ENCRYPTION_KEY=        # random 32-char string for AES token encrypti
 # Google OAuth — used only for per-user YouTube connection, not app login
 NUXT_GOOGLE_CLIENT_ID=
 NUXT_GOOGLE_CLIENT_SECRET=
-NUXT_GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/youtube/callback
+NUXT_GOOGLE_REDIRECT_URI=http://localhost:3000/api/youtube/callback
 
 # YouTube API key — used for fetching public playlists (no OAuth needed)
 NUXT_YOUTUBE_API_KEY=
@@ -476,7 +476,7 @@ cd /opt/yt-player
 
 cp .env.example .env
 nano .env
-# Set NUXT_GOOGLE_REDIRECT_URI=https://YOUR_LOCAL_DOMAIN/api/auth/youtube/callback
+# Set NUXT_GOOGLE_REDIRECT_URI=https://YOUR_LOCAL_DOMAIN/api/youtube/callback
 
 mkdir -p /opt/yt-player/data
 docker compose up -d
@@ -534,7 +534,7 @@ scp root@<LXC_IP>:/data/caddy/pki/authorities/local/root.crt ~/caddy-home-ca.crt
 
 ### 8. Update OAuth redirect URI
 In Google Cloud Console → Credentials → your OAuth client → add:
-`https://YOUR_LOCAL_DOMAIN/api/auth/youtube/callback`
+`https://YOUR_LOCAL_DOMAIN/api/youtube/callback`
 
 ---
 
