@@ -26,7 +26,7 @@ A self-hosted, multi-user YouTube playlist manager. Users authenticate via Googl
 
 | Layer | Choice |
 |---|---|
-| Framework | Nuxt 4 (Vue 3, TypeScript) |
+| Framework | Nuxt 4 (Vue 3, TypeScript) — `app/` directory is the default srcDir |
 | Runtime | Node.js 24 LTS |
 | Package manager | pnpm |
 | Database | SQLite via `better-sqlite3` |
