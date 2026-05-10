@@ -9,6 +9,10 @@ const {
   loadVideos, loadNextPage, loadPrevPage, seekToVideo, play, next, previous, random,
 } = usePlayer(playlistId)
 
+const { user } = useUserSession()
+const userId = computed(() => user.value?.id)
+const { autoPlay, randomNext } = usePlayerSettings(userId, playlistId)
+
 const showShare = ref(false)
 const listContainer = ref<HTMLElement | null>(null)
 const topSentinel = ref<HTMLElement | null>(null)
@@ -104,6 +108,8 @@ const displayVideos = computed(() =>
             :video-id="activeVideo.id"
             :title="activeVideo.title"
             :channel-title="activeVideo.channel_title"
+            v-model:auto-play="autoPlay"
+            v-model:random-next="randomNext"
             @previous="previous"
             @next="next"
             @random="random"

@@ -3,19 +3,24 @@ const props = defineProps<{
   videoId: string
   title?: string | null
   channelTitle?: string | null
+  autoPlay: boolean
+  randomNext: boolean
 }>()
 
-const emit = defineEmits<{ previous: [], next: [], random: [] }>()
-
-const autoPlay = ref(false)
-const randomNext = ref(false)
+const emit = defineEmits<{
+  previous: []
+  next: []
+  random: []
+  'update:autoPlay': [value: boolean]
+  'update:randomNext': [value: boolean]
+}>()
 
 const playerEl = ref<HTMLElement | null>(null)
 let player: any = null
 
 function onEnded() {
-  if (!autoPlay.value) return
-  if (randomNext.value) emit('random')
+  if (!props.autoPlay) return
+  if (props.randomNext) emit('random')
   else emit('next')
 }
 
@@ -77,14 +82,21 @@ watch(() => props.videoId, (id) => {
 
       <div class="ml-auto flex items-center gap-4">
         <label class="flex items-center gap-2 text-sm cursor-pointer select-none">
-          <USwitch v-model="autoPlay" />
+          <USwitch
+            :model-value="autoPlay"
+            @update:model-value="$emit('update:autoPlay', $event)"
+          />
           <span>Auto-play</span>
         </label>
         <label
           class="flex items-center gap-2 text-sm cursor-pointer select-none"
           :class="{ 'opacity-40 pointer-events-none': !autoPlay }"
         >
-          <USwitch v-model="randomNext" :disabled="!autoPlay" />
+          <USwitch
+            :model-value="randomNext"
+            :disabled="!autoPlay"
+            @update:model-value="$emit('update:randomNext', $event)"
+          />
           <span>Random next</span>
         </label>
       </div>
