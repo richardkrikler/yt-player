@@ -367,7 +367,7 @@ Google OAuth here is used **only** to connect a YouTube account after login — 
 2. Application type: **Web application**
 3. Add **Authorized redirect URIs**:
    - Local: `http://localhost:3000/api/auth/google/callback`
-   - Production: `https://YOUR_DOMAIN/api/auth/google/callback`
+   - Production: `https://YOUR_LOCAL_DOMAIN/api/auth/youtube/callback`
 4. Click **Create** — copy the **Client ID** and **Client Secret**
 
 ### 5. (Optional) Create an API Key for public playlist fallback
@@ -460,21 +460,29 @@ curl -fsSL https://get.docker.com | sh
 # Docker runs as root inside the LXC — no usermod needed
 ```
 
-### 3. Deploy the App
+### 3. AdGuard DNS Rewrite
+In AdGuard Home, add a DNS rewrite so `YOUR_LOCAL_DOMAIN` resolves to the LXC's local IP:
+
+1. Open AdGuard Home → **Filters → DNS Rewrites → Add DNS Rewrite**
+2. Domain: `YOUR_LOCAL_DOMAIN` — IP: `<LXC_IP>` (find it with `ip a` inside the LXC)
+3. Save
+
+All devices on the network using AdGuard as their DNS will now resolve `YOUR_LOCAL_DOMAIN` to the LXC.
+
+### 4. Deploy the App
 ```bash
 git clone <repo> /opt/yt-player
 cd /opt/yt-player
 
-# Create production .env
 cp .env.example .env
 nano .env
-# Set NUXT_GOOGLE_REDIRECT_URI=https://YOUR_DOMAIN/api/auth/youtube/callback
+# Set NUXT_GOOGLE_REDIRECT_URI=https://YOUR_LOCAL_DOMAIN/api/auth/youtube/callback
 
 mkdir -p /opt/yt-player/data
 docker compose up -d
 ```
 
-### 4. `docker-compose.yml` (outline — generated during scaffold)
+### 5. `docker-compose.yml` (outline — generated during scaffold)
 ```yaml
 services:
   app:
@@ -487,8 +495,8 @@ services:
     env_file: .env
 ```
 
-### 5. Reverse Proxy with Caddy + HTTPS
-Caddy handles TLS certificates and renewal automatically via Let's Encrypt — no certbot needed.
+### 6. Reverse Proxy with Caddy + HTTPS
+DNS is handled by AdGuard locally — no public DNS validation needed. Caddy issues certificates via its **internal CA**.
 
 ```bash
 apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
@@ -499,19 +507,34 @@ apt update && apt install -y caddy
 
 `/etc/caddy/Caddyfile`:
 ```
-YOUR_DOMAIN {
+YOUR_LOCAL_DOMAIN {
     reverse_proxy localhost:3000
+    tls internal
 }
 ```
 ```bash
 systemctl reload caddy
 ```
 
-Caddy will automatically obtain and renew a Let's Encrypt certificate for `YOUR_DOMAIN` on first request.
+### 7. Trust Caddy's Root CA (once per device)
+Caddy generates a local root CA at `/data/caddy/pki/authorities/local/root.crt`. Copy it to each device and install it as a trusted root — after this, `https://YOUR_LOCAL_DOMAIN` shows a valid padlock with no warnings.
 
-### 6. Update OAuth redirect URI
+```bash
+# Copy the cert out of the LXC to your machine
+scp root@<LXC_IP>:/data/caddy/pki/authorities/local/root.crt ~/caddy-home-ca.crt
+```
+
+| Device | How to trust |
+|---|---|
+| macOS | Double-click → Keychain Access → set to **Always Trust** |
+| Windows | Double-click → Install → **Trusted Root Certification Authorities** |
+| Linux | `cp caddy-home-ca.crt /usr/local/share/ca-certificates/ && update-ca-certificates` |
+| Android | Settings → Security → **Install CA certificate** |
+| iOS | AirDrop or email the file → Settings → **Profile Downloaded** → install → General → About → Certificate Trust Settings → enable |
+
+### 8. Update OAuth redirect URI
 In Google Cloud Console → Credentials → your OAuth client → add:
-`https://YOUR_DOMAIN/api/auth/youtube/callback`
+`https://YOUR_LOCAL_DOMAIN/api/auth/youtube/callback`
 
 ---
 
