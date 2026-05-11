@@ -7,8 +7,11 @@ export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
   const id = getRouterParam(event, 'id')!
 
-  const owned = await db.select({ playlistId: userPlaylists.playlistId }).from(userPlaylists)
-    .where(and(eq(userPlaylists.userId, user.id), eq(userPlaylists.playlistId, id))).get()
+  const owned = await db
+    .select({ playlistId: userPlaylists.playlistId, customTitle: userPlaylists.customTitle })
+    .from(userPlaylists)
+    .where(and(eq(userPlaylists.userId, user.id), eq(userPlaylists.playlistId, id)))
+    .get()
 
   if (!owned) {
     const shared = await db.select({ id: playlistShares.id }).from(playlistShares)
@@ -19,5 +22,5 @@ export default defineEventHandler(async (event) => {
   const playlist = await db.select().from(playlists).where(eq(playlists.id, id)).get()
   if (!playlist) throw createError({ statusCode: 404, message: 'Playlist not found' })
 
-  return playlist
+  return { ...playlist, customTitle: owned?.customTitle ?? null }
 })

@@ -24,8 +24,8 @@ const { data: playlist } = await useFetch(`/api/playlists/${playlistId.value}`)
 
 useHead(computed(() => ({
   title: activeVideo.value?.title
-    ? `${activeVideo.value.title} · ${playlist.value?.title ?? 'Playlist'}`
-    : (playlist.value?.title ?? 'Playlist'),
+    ? `${activeVideo.value.title} · ${playlist.value?.customTitle || playlist.value?.title || 'Playlist'}`
+    : (playlist.value?.customTitle || playlist.value?.title || 'Playlist'),
 })))
 
 async function scrollToActive() {
@@ -95,7 +95,10 @@ const displayVideos = computed(() =>
       <NuxtLink to="/" class="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
         ← Back
       </NuxtLink>
-      <h1 class="font-bold text-lg truncate">{{ playlist?.title }}</h1>
+      <div class="min-w-0">
+        <h1 class="font-bold text-lg truncate">{{ playlist?.customTitle || playlist?.title }}</h1>
+        <p v-if="playlist?.customTitle" class="text-xs text-gray-400 truncate -mt-0.5">{{ playlist?.title }}</p>
+      </div>
       <UBadge v-if="playlist?.privacyStatus === 'private'" color="orange" variant="soft" size="xs">
         Private
       </UBadge>

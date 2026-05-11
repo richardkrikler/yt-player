@@ -49,7 +49,7 @@ async function disconnect() {
 
       <div v-if="user?.youtubeConnected" class="flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <span class="i-heroicons-check-circle text-green-500 text-lg" aria-hidden="true" />
+          <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-green-500" aria-hidden="true" />
           <span class="text-sm">Connected</span>
         </div>
         <UButton size="sm" color="red" variant="ghost" @click="disconnect">

@@ -28,10 +28,11 @@ export default defineEventHandler(async (event) => {
       if (!shared) throw createError({ statusCode: 403, message: 'Access denied' })
     }
 
-    return db.select({ item: playlistItems, video: videos, playlist: playlists })
+    return db.select({ item: playlistItems, video: videos, playlist: playlists, customTitle: userPlaylists.customTitle })
       .from(playlistItems)
       .innerJoin(videos, eq(playlistItems.videoId, videos.id))
       .innerJoin(playlists, eq(playlistItems.playlistId, playlists.id))
+      .leftJoin(userPlaylists, and(eq(userPlaylists.playlistId, playlists.id), eq(userPlaylists.userId, user.id)))
       .where(and(eq(playlistItems.playlistId, playlist), inArray(videos.id, videoIds)))
   }
 
@@ -49,10 +50,11 @@ export default defineEventHandler(async (event) => {
 
   if (accessibleIds.length === 0) return []
 
-  return db.select({ item: playlistItems, video: videos, playlist: playlists })
+  return db.select({ item: playlistItems, video: videos, playlist: playlists, customTitle: userPlaylists.customTitle })
     .from(playlistItems)
     .innerJoin(videos, eq(playlistItems.videoId, videos.id))
     .innerJoin(playlists, eq(playlistItems.playlistId, playlists.id))
+    .leftJoin(userPlaylists, and(eq(userPlaylists.playlistId, playlists.id), eq(userPlaylists.userId, user.id)))
     .where(and(
       inArray(playlistItems.playlistId, accessibleIds),
       inArray(videos.id, videoIds),

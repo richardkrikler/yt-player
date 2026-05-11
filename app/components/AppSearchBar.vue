@@ -43,7 +43,7 @@ function resultHref(result: any) {
         <div class="min-w-0">
           <p class="text-sm font-medium truncate">{{ result.video?.title }}</p>
           <p class="text-xs text-gray-500 truncate">
-            {{ result.playlist?.title }}
+            {{ result.customTitle || result.playlist?.title }}
             <span v-if="result.video?.channel_title"> · {{ result.video.channel_title }}</span>
           </p>
         </div>

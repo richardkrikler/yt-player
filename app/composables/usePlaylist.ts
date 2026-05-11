@@ -41,6 +41,15 @@ export function usePlaylist() {
     return $fetch(`/api/playlists/${id}/fetch-videos`, { method: 'POST' })
   }
 
+  async function renamePlaylist(id: string, title: string) {
+    const { customTitle } = await $fetch<{ customTitle: string | null }>(
+      `/api/playlists/${id}/custom-title`,
+      { method: 'PATCH', body: { title } },
+    )
+    const idx = playlists.value.findIndex(p => p.id === id)
+    if (idx !== -1) playlists.value[idx] = { ...playlists.value[idx], customTitle }
+  }
+
   return {
     playlists,
     loading,
@@ -51,5 +60,6 @@ export function usePlaylist() {
     removePlaylist,
     refreshMetadata,
     fetchVideos,
+    renamePlaylist,
   }
 }

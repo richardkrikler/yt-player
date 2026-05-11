@@ -1,7 +1,7 @@
 <script setup lang="ts">
 useHead({ title: 'My Playlists' })
 const { user } = useUserSession()
-const { playlists, loading, error, fetchPlaylists, importFromUrl, removePlaylist, refreshMetadata, fetchVideos } = usePlaylist()
+const { playlists, loading, error, fetchPlaylists, importFromUrl, removePlaylist, refreshMetadata, fetchVideos, renamePlaylist } = usePlaylist()
 
 // import from YouTube state
 const showYTImport = ref(false)
@@ -163,6 +163,7 @@ async function addFromUrl() {
           @refresh="refreshMetadata(pl.id)"
           @fetch-videos="fetchVideos(pl.id)"
           @remove="removePlaylist(pl.id)"
+          @rename="renamePlaylist(pl.id, $event)"
         />
       </li>
     </ul>

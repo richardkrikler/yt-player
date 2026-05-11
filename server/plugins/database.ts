@@ -70,6 +70,14 @@ export default defineNitroPlugin(() => {
     );
   `)
 
+  // Migrations — add columns that may not exist in older DBs
+  const hasCustomTitle = (sqlite.prepare(
+    `SELECT COUNT(*) as n FROM pragma_table_info('user_playlists') WHERE name = 'custom_title'`,
+  ).get() as { n: number }).n
+  if (!hasCustomTitle) {
+    sqlite.exec(`ALTER TABLE user_playlists ADD COLUMN custom_title TEXT`)
+  }
+
   // FTS5 — always drop and recreate so column names stay in sync with the
   // content table. 'rebuild' repopulates from existing videos rows.
   sqlite.exec(`
