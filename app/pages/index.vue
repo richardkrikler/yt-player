@@ -22,7 +22,8 @@ async function loadYTPlaylists() {
   showYTImport.value = true
   ytLoading.value = true
   try {
-    ytPlaylists.value = await $fetch('/api/playlists/mine/youtube')
+    const data = await $fetch('/api/playlists/mine/youtube')
+    ytPlaylists.value = data.slice().sort((a: any, b: any) => a.title.localeCompare(b.title))
   }
   catch (e: any) {
     ytPlaylists.value = []
