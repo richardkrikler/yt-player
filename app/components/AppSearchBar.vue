@@ -1,14 +1,22 @@
 <script setup lang="ts">
 const { query, results, loading, clear } = useSearch()
+const route = useRoute()
 const open = computed(() => query.value.length >= 2)
+const containerEl = ref<HTMLElement | null>(null)
 
 function resultHref(result: any) {
   return `/playlist/${result.item?.playlistId}/${result.video?.id}`
 }
+
+function onFocusOut(e: FocusEvent) {
+  if (!containerEl.value?.contains(e.relatedTarget as Node)) clear()
+}
+
+watch(route, clear)
 </script>
 
 <template>
-  <div class="relative w-full">
+  <div ref="containerEl" class="relative w-full" @focusout="onFocusOut">
     <UInput
       v-model="query"
       placeholder="Search videos…"
