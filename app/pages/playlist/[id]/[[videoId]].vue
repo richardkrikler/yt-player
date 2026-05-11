@@ -109,8 +109,8 @@ const displayVideos = computed(() =>
 </script>
 
 <template>
-  <div>
-    <div class="flex items-center gap-3 mb-4 flex-wrap">
+  <div class="h-full flex flex-col">
+    <div class="flex items-center gap-3 mb-4 flex-wrap shrink-0">
       <NuxtLink to="/" class="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
         ← Back
       </NuxtLink>
@@ -136,7 +136,7 @@ const displayVideos = computed(() =>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
+    <div class="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
       <!-- Player -->
       <div>
         <div v-if="activeVideo">
@@ -176,7 +176,7 @@ const displayVideos = computed(() =>
           <p>No videos cached yet.</p>
         </div>
 
-        <div v-else ref="listContainer" class="overflow-y-auto max-h-[calc(100vh-12rem)]">
+        <div v-else ref="listContainer" class="overflow-y-auto flex-1 min-h-0">
           <div ref="topSentinel" class="h-1" />
           <div v-if="loadingMore" class="text-center py-2 text-xs text-gray-400">Loading…</div>
           <VideoList

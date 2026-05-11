@@ -9,7 +9,7 @@ async function logout() {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950">
+  <div class="h-screen overflow-hidden flex flex-col bg-gray-50 dark:bg-gray-950">
     <header class="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 sticky top-0 z-10" style="view-transition-name: site-header">
       <nav class="max-w-7xl mx-auto px-4 h-14 flex items-center gap-4" aria-label="Main navigation">
         <NuxtLink to="/" class="font-bold text-lg text-primary-600 dark:text-primary-400 shrink-0">
@@ -41,7 +41,7 @@ async function logout() {
       </nav>
     </header>
 
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6">
+    <main class="flex-1 min-h-0 overflow-y-auto max-w-7xl w-full mx-auto px-4 py-6">
       <slot />
     </main>
   </div>
