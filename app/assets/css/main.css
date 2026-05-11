@@ -1,2 +1,101 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
+
+/* ── View Transitions ─────────────────────────────────────────────── */
+
+/* Header stays locked */
+::view-transition-old(site-header),
+::view-transition-new(site-header) {
+  animation: none;
+}
+
+/* Root: default cross-fade */
+::view-transition-old(root) { animation: 200ms ease both vt-fade-out; }
+::view-transition-new(root) { animation: 200ms ease both vt-fade-in; }
+
+/* ── Directional root slide ────────────────────────────────────────
+   Two selectors per rule: active-view-transition-type (Chrome 125+,
+   set by Nuxt's fromTypes page meta) and data-vt attribute (set by
+   our router.beforeEach plugin, Chrome 111+). Either match triggers
+   the animation — whichever mechanism works for the browser. */
+
+/* Forward: home → playlist */
+html:active-view-transition-type(vt-forward) ::view-transition-old(root),
+html[data-vt='forward'] ::view-transition-old(root) {
+  animation: 300ms cubic-bezier(.4, 0, .2, 1) both vt-slide-out-left;
+}
+html:active-view-transition-type(vt-forward) ::view-transition-new(root),
+html[data-vt='forward'] ::view-transition-new(root) {
+  animation: 300ms cubic-bezier(.4, 0, .2, 1) both vt-slide-in-right;
+}
+
+/* Back: playlist → home */
+html:active-view-transition-type(vt-back) ::view-transition-old(root),
+html[data-vt='back'] ::view-transition-old(root) {
+  animation: 300ms cubic-bezier(.4, 0, .2, 1) both vt-slide-out-right;
+}
+html:active-view-transition-type(vt-back) ::view-transition-new(root),
+html[data-vt='back'] ::view-transition-new(root) {
+  animation: 300ms cubic-bezier(.4, 0, .2, 1) both vt-slide-in-left;
+}
+
+/* ── Shared element morphs ──────────────────────────────────────────
+   playlist-title-expand: card h2 (customTitle || title) → page h1
+   playlist-thumb-expand: card thumbnail → small header thumbnail
+   Names are stamped synchronously on click via direct DOM refs,
+   so the snapshot captures them in the correct state.               */
+
+::view-transition-old(playlist-title-expand),
+::view-transition-new(playlist-title-expand),
+::view-transition-old(playlist-thumb-expand),
+::view-transition-new(playlist-thumb-expand) {
+  animation-duration: 300ms;
+  animation-timing-function: cubic-bezier(.4, 0, .2, 1);
+  mix-blend-mode: normal;
+}
+
+/* Orphaned old (e.g. playlist h1/thumb when navigating back — no card
+   has the name on the home page). Match the root animation exactly so
+   the "hole" left in the root is always covered by the pseudo-element. */
+::view-transition-old(playlist-title-expand):only-child,
+::view-transition-old(playlist-thumb-expand):only-child {
+  animation: 200ms ease both vt-fade-out;
+}
+
+html:active-view-transition-type(vt-back) ::view-transition-old(playlist-title-expand):only-child,
+html:active-view-transition-type(vt-back) ::view-transition-old(playlist-thumb-expand):only-child,
+html[data-vt='back'] ::view-transition-old(playlist-title-expand):only-child,
+html[data-vt='back'] ::view-transition-old(playlist-thumb-expand):only-child {
+  animation: 300ms cubic-bezier(.4, 0, .2, 1) both vt-slide-out-right;
+}
+
+/* Orphaned new (playlist h1/thumb arriving from a non-home page) */
+::view-transition-new(playlist-title-expand):only-child,
+::view-transition-new(playlist-thumb-expand):only-child {
+  animation: 200ms ease both vt-fade-in;
+}
+
+html:active-view-transition-type(vt-forward) ::view-transition-new(playlist-title-expand):only-child,
+html:active-view-transition-type(vt-forward) ::view-transition-new(playlist-thumb-expand):only-child,
+html[data-vt='forward'] ::view-transition-new(playlist-title-expand):only-child,
+html[data-vt='forward'] ::view-transition-new(playlist-thumb-expand):only-child {
+  animation: 300ms cubic-bezier(.4, 0, .2, 1) both vt-slide-in-right;
+}
+
+@keyframes vt-fade-out      { to   { opacity: 0; } }
+@keyframes vt-fade-in       { from { opacity: 0; } }
+@keyframes vt-slide-out-left  { to   { opacity: 0; transform: translateX(-20px); } }
+@keyframes vt-slide-in-right  { from { opacity: 0; transform: translateX(20px);  } }
+@keyframes vt-slide-out-right { to   { opacity: 0; transform: translateX(20px);  } }
+@keyframes vt-slide-in-left   { from { opacity: 0; transform: translateX(-20px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root),
+  ::view-transition-old(playlist-title-expand),
+  ::view-transition-new(playlist-title-expand),
+  ::view-transition-old(playlist-thumb-expand),
+  ::view-transition-new(playlist-thumb-expand) {
+    animation: none;
+  }
+}

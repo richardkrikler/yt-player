@@ -1,5 +1,7 @@
 export function usePlaylist() {
-  const playlists = ref<any[]>([])
+  // useState persists across client-side navigations so cards are immediately
+  // available when the home page re-mounts (needed for back-nav morph timing).
+  const playlists = useState<any[]>('playlists', () => [])
   const loading = ref(false)
   const error = ref<string | null>(null)
 

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+definePageMeta({ viewTransition: { fromTypes: ['vt-back'] } })
 const route = useRoute()
 const playlistId = computed(() => route.params.id as string)
 const { query: searchQuery, results: searchResults, loading: searchLoading } = useSearch(playlistId)
@@ -12,6 +13,10 @@ const {
 const { user } = useUserSession()
 const userId = computed(() => user.value?.id)
 const { autoPlay, randomNext } = usePlayerSettings(userId, playlistId)
+
+const { setPlaylistVTNames, clearPlaylistVTNames, backId: playlistBackId } = usePlaylistTransition()
+const h1El = ref<HTMLElement | null>(null)
+const thumbEl = ref<HTMLImageElement | null>(null)
 
 const showShare = ref(false)
 const listContainer = ref<HTMLElement | null>(null)
@@ -44,7 +49,21 @@ async function handleLoadPrev() {
   container.scrollTop += container.scrollHeight - heightBefore
 }
 
+onBeforeRouteLeave((to) => {
+  if (to.path === '/') {
+    // Signal home page which card is the morph target; keep names for old-state capture
+    playlistBackId.value = playlistId.value
+  } else {
+    // Going elsewhere: remove names so they slide with the root, not float free
+    clearPlaylistVTNames()
+  }
+})
+
 onMounted(async () => {
+  // Stamp names synchronously (before first await) so page:finish new-state
+  // capture includes them — this is the forward-transition new-state target.
+  setPlaylistVTNames(thumbEl.value, h1El.value)
+
   await loadVideos()
 
   const initialVideoId = (route.params.videoId as string) || (route.query.videoId as string) || undefined
@@ -95,8 +114,16 @@ const displayVideos = computed(() =>
       <NuxtLink to="/" class="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
         ← Back
       </NuxtLink>
+      <img
+        v-if="playlist?.thumbnailUrl"
+        ref="thumbEl"
+        :src="playlist.thumbnailUrl"
+        :alt="playlist?.customTitle || playlist?.title"
+        class="w-14 rounded object-cover shrink-0"
+        style="aspect-ratio: 16/9"
+      >
       <div class="min-w-0">
-        <h1 class="font-bold text-lg truncate">{{ playlist?.customTitle || playlist?.title }}</h1>
+        <h1 ref="h1El" class="font-bold text-lg truncate">{{ playlist?.customTitle || playlist?.title }}</h1>
         <p v-if="playlist?.customTitle" class="text-xs text-gray-400 truncate -mt-0.5">{{ playlist?.title }}</p>
       </div>
       <UBadge v-if="playlist?.privacyStatus === 'private'" color="orange" variant="soft" size="xs">

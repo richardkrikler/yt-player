@@ -1,4 +1,5 @@
 <script setup lang="ts">
+definePageMeta({ viewTransition: { fromTypes: ['vt-forward'] } })
 useHead({ title: 'My Playlists' })
 const { user } = useUserSession()
 const { playlists, loading, error, fetchPlaylists, importFromUrl, removePlaylist, refreshMetadata, fetchVideos, renamePlaylist } = usePlaylist()
@@ -141,7 +142,7 @@ async function addFromUrl() {
       </ul>
     </div>
 
-    <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div v-if="loading && playlists.length === 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
       <div v-for="n in 4" :key="n" class="h-64 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse" />
     </div>
 

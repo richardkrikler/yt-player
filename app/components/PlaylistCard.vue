@@ -23,6 +23,19 @@ const emit = defineEmits<{
 const editing = ref(false)
 const draft = ref('')
 const inputEl = ref<HTMLInputElement | null>(null)
+const imgEl = ref<HTMLImageElement | null>(null)
+const titleEl = ref<HTMLElement | null>(null)
+
+const { setPlaylistVTNames, backId } = usePlaylistTransition()
+
+// Back-navigation: when this card is the morph target, stamp names before
+// page:finish captures the new-state snapshot (onMounted fires before it).
+onMounted(() => {
+  if (backId.value === props.playlist.id) {
+    setPlaylistVTNames(imgEl.value, titleEl.value)
+    backId.value = null
+  }
+})
 
 function startEdit() {
   draft.value = props.playlist.customTitle ?? ''
@@ -38,14 +51,19 @@ function commitEdit() {
 function cancelEdit() {
   editing.value = false
 }
+
+function activateTransition() {
+  setPlaylistVTNames(imgEl.value, titleEl.value)
+}
 </script>
 
 <template>
   <article class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
-    <NuxtLink :to="`/playlist/${playlist.id}`" class="block">
+    <NuxtLink :to="`/playlist/${playlist.id}`" class="block" @click="activateTransition">
       <div class="aspect-video bg-gray-100 dark:bg-gray-800 relative">
         <img
           v-if="playlist.thumbnailUrl"
+          ref="imgEl"
           :src="playlist.thumbnailUrl"
           :alt="playlist.title"
           class="w-full h-full object-cover"
@@ -80,8 +98,11 @@ function cancelEdit() {
           >
         </template>
         <template v-else>
-          <NuxtLink :to="`/playlist/${playlist.id}`" class="flex-1 min-w-0">
-            <h2 class="font-semibold text-sm leading-snug line-clamp-2 hover:text-primary-600 dark:hover:text-primary-400">
+          <NuxtLink :to="`/playlist/${playlist.id}`" class="flex-1 min-w-0" @click="activateTransition">
+            <h2
+              ref="titleEl"
+              class="font-semibold text-sm leading-snug line-clamp-2 hover:text-primary-600 dark:hover:text-primary-400"
+            >
               {{ playlist.customTitle || playlist.title }}
             </h2>
           </NuxtLink>
