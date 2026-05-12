@@ -1,0 +1,35 @@
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  build:
+    runs-on: docker
+    container:
+      image: node:24-alpine
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        run: npm i -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+        env:
+          # Dummy values — only needed so Nuxt doesn't abort at build time
+          NUXT_SESSION_PASSWORD: 00000000000000000000000000000000
+          DATABASE_PATH: /tmp/build.sqlite
+
+      - name: Archive output
+        run: tar -czf yt-player.tar.gz -C .output .
+
+      - name: Publish release
+        uses: actions/forgejo-release@v2
+        with:
+          direction: upload
+          release-dir: .
+          release-tag: ${{ github.ref_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
