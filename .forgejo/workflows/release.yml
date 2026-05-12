@@ -8,7 +8,7 @@ jobs:
     container:
       image: node:24-alpine
     steps:
-      - uses: actions/checkout@v4
+      - uses: https://data.forgejo.org/actions/checkout@v6
 
       - name: Install pnpm
         run: npm i -g pnpm
@@ -19,17 +19,17 @@ jobs:
       - name: Build
         run: pnpm build
         env:
-          # Dummy values — only needed so Nuxt doesn't abort at build time
           NUXT_SESSION_PASSWORD: 00000000000000000000000000000000
-          DATABASE_PATH: /tmp/build.sqlite
+          DATABASE_URL: /tmp/build.sqlite
 
       - name: Archive output
-        run: tar -czf yt-player.tar.gz -C .output .
+        run: mkdir -p dist && tar -czf dist/yt-player.tar.gz -C .output .
 
-      - name: Publish release
-        uses: actions/forgejo-release@v2
+      - uses: https://data.forgejo.org/actions/forgejo-release@v2.11.3
         with:
           direction: upload
-          release-dir: .
-          release-tag: ${{ github.ref_name }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          url: http://git.home.richardkrikler.at:3000
+          repo: ${{ forge.repository }}
+          tag: ${{ forge.ref_name }}
+          token: ${{ secrets.FORGEJO_TOKEN }}
+          release-dir: dist
