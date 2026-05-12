@@ -6,7 +6,7 @@ jobs:
   build:
     runs-on: docker
     container:
-      image: node:24-alpine
+      image: node:24-slim
     steps:
       - uses: https://data.forgejo.org/actions/checkout@v6
 
@@ -31,5 +31,5 @@ jobs:
           url: http://git.home.richardkrikler.at:3000
           repo: ${{ forge.repository }}
           tag: ${{ forge.ref_name }}
-          token: ${{ secrets.FORGEJO_TOKEN }}
+
           release-dir: dist
