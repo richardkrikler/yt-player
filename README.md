@@ -115,59 +115,88 @@ The **first account to register** is automatically assigned the `admin` role.
 
 ---
 
-## Proxmox LXC Deployment
+## Release & CI Workflow
 
-### 1. Create the LXC
+Releases are built automatically by Forgejo Actions.
 
-In the Proxmox web UI:
-1. Download the **Debian 12** template via **local storage → CT Templates → Templates**
-2. **Create CT** — set ID (e.g. `200`), hostname `yt-player`, allocate resources:
-   - CPU: 2 cores / RAM: 1 GB / Disk: 10 GB
-3. Enable Docker nesting — on the **Proxmox host**:
+### Publishing a release
 
 ```bash
-nano /etc/pve/lxc/200.conf
+git tag v1.2.3
+git push origin v1.2.3
 ```
 
-Add at the bottom:
+Forgejo Actions (`.forgejo/workflows/release.yml`) triggers on every `v*` tag:
+
+1. Checks out the repo inside a `node:24-slim` container
+2. Runs `pnpm install && pnpm build`
+3. Archives `.output/` → `yt-player.tar.gz`
+4. Uploads it as a release asset via `forgejo-release@v2.11.3`
+
+The resulting asset is available at:
 ```
-features: keyctl=1,nesting=1
+http://git.home.richardkrikler.at:3000/richardkrikler/yt-player/releases/download/<tag>/yt-player.tar.gz
 ```
 
-4. Start the LXC
+### Updating an installed instance
 
-### 2. Install Docker
+From inside the LXC:
+
+```bash
+update
+```
+
+Stops the service, downloads the latest release tarball from Forgejo, extracts it in-place, and restarts. The `/usr/bin/update` script is self-contained and baked in at install time.
+
+---
+
+## Proxmox LXC Deployment
+
+### Install (one-liner on the Proxmox host)
+
+```bash
+bash -c "$(curl -fsSL http://git.home.richardkrikler.at:3000/richardkrikler/yt-player/raw/branch/main/proxmox/ct/yt-player.sh)"
+```
+
+Creates a Debian 13 LXC, installs Node.js 24 and the latest release, and sets up a systemd service. Defaults:
+
+| | |
+|---|---|
+| OS | Debian 13 |
+| CPU | 1 core |
+| RAM | 512 MB |
+| Disk | 4 GB |
+| Nameserver | `192.168.1.202` (override: `var_ns=x.x.x.x bash ct/yt-player.sh`) |
+
+### Post-install configuration
+
+SSH into the LXC and edit the environment file:
+
+```bash
+nano /opt/yt-player/.env
+```
+
+Fill in the required secrets (see [Environment Variables](#environment-variables)), then:
+
+```bash
+systemctl restart yt-player
+```
+
+The app is now available at `http://<LXC_IP>:3000`.
+
+**Paths inside the LXC:**
+
+| Path | Purpose |
+|---|---|
+| `/opt/yt-player/app` | Application build output |
+| `/opt/yt-player/data/yt-player.db` | SQLite database |
+| `/opt/yt-player/.env` | Environment / secrets |
+| `/opt/yt-player/version` | Installed version tag |
+
+### Optional: Caddy reverse proxy with HTTPS
 
 ```bash
 # Inside the LXC
-apt update && apt install -y ca-certificates curl
-curl -fsSL https://get.docker.com | sh
-```
-
-### 3. Configure AdGuard DNS Rewrite
-
-In AdGuard Home → **Filters → DNS Rewrites → Add DNS Rewrite**:
-- Domain: `YOUR_LOCAL_DOMAIN`
-- IP: LXC IP address (find with `ip a` inside the LXC)
-
-### 4. Deploy the App
-
-```bash
-git clone <repo> /opt/yt-player
-cd /opt/yt-player
-
-cp .env.example .env
-nano .env
-# Set NUXT_GOOGLE_REDIRECT_URI=https://YOUR_LOCAL_DOMAIN/api/youtube/callback
-# Set DATABASE_URL=/app/data/yt-player.db
-
-mkdir -p /opt/yt-player/data
-docker compose up -d
-```
-
-### 5. Install Caddy
-
-```bash
 apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
 curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
 curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list
@@ -186,16 +215,17 @@ YOUR_LOCAL_DOMAIN {
 systemctl reload caddy
 ```
 
-### 6. Trust Caddy's Root CA (once per device)
+Add a DNS rewrite in AdGuard Home (or your local DNS):
+- Domain: `YOUR_LOCAL_DOMAIN` → LXC IP
 
-Caddy generates a local root CA at `/data/caddy/pki/authorities/local/root.crt`.
+Update `NUXT_GOOGLE_REDIRECT_URI` in `.env` to `https://YOUR_LOCAL_DOMAIN/api/youtube/callback`, then `systemctl restart yt-player`.
+
+#### Trust Caddy's Root CA (once per device)
 
 ```bash
-# Copy to your machine
+# Copy the CA cert from the LXC to your machine
 scp root@<LXC_IP>:/data/caddy/pki/authorities/local/root.crt ~/caddy-home-ca.crt
 ```
-
-Install it as a trusted root CA on each device:
 
 | Device | Steps |
 |---|---|
@@ -203,12 +233,7 @@ Install it as a trusted root CA on each device:
 | Windows | Double-click → Install → **Trusted Root Certification Authorities** |
 | Linux | `cp caddy-home-ca.crt /usr/local/share/ca-certificates/ && update-ca-certificates` |
 | Android | Settings → Security → **Install CA certificate** |
-| iOS | AirDrop or email the file → Settings → **Profile Downloaded** → install → General → About → Certificate Trust Settings → enable |
-
-### 7. Update OAuth Redirect URI
-
-In Google Cloud Console → Credentials → your OAuth client → add:
-`https://YOUR_LOCAL_DOMAIN/api/youtube/callback`
+| iOS | AirDrop or email → Settings → **Profile Downloaded** → install → General → About → Certificate Trust Settings → enable |
 
 ---
 
