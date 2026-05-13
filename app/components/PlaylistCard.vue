@@ -107,7 +107,7 @@ function activateTransition() {
             </h2>
           </NuxtLink>
           <button
-            class="shrink-0 opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-opacity mt-0.5"
+            class="shrink-0 opacity-60 lg:opacity-0 lg:group-hover:opacity-60 hover:!opacity-100 transition-opacity mt-0.5"
             aria-label="Edit title"
             @click.prevent="startEdit"
           >

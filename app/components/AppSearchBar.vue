@@ -27,7 +27,7 @@ watch(route, clear)
     />
     <div
       v-if="open"
-      class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto"
+      class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 max-h-100 overflow-y-auto"
       role="listbox"
       aria-label="Search results"
     >
