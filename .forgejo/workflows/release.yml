@@ -22,6 +22,7 @@ jobs:
       - name: Build
         run: pnpm build
         env:
+          NODE_OPTIONS: --max-old-space-size=3072
           NUXT_SESSION_PASSWORD: 00000000000000000000000000000000
           DATABASE_URL: /tmp/build.sqlite
 

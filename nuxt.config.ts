@@ -24,6 +24,11 @@ export default defineNuxtConfig({
   },
 
   nitro: {
+    esbuild: {
+      options: {
+        target: 'es2020',
+      },
+    },
     externals: {
       external: ['better-sqlite3'],
     },
