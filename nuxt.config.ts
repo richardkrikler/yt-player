@@ -14,6 +14,7 @@ export default defineNuxtConfig({
 
   app: {
     head: {
+      htmlAttrs: { lang: 'en' },
       titleTemplate: '%s — YT Player',
       title: 'YT Player',
     },

@@ -125,7 +125,7 @@ const displayVideos = computed(() =>
 <template>
   <div class="h-full flex flex-col">
     <div class="flex items-center gap-3 mb-4 flex-wrap shrink-0">
-      <NuxtLink to="/" class="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+      <NuxtLink to="/" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
         ← Back
       </NuxtLink>
       <img

@@ -30,7 +30,7 @@ function formatDuration(iso: string | null | undefined): string {
         :aria-current="activeVideoId === row.video?.id ? 'true' : undefined"
         @click="$emit('play', row)"
       >
-        <span class="text-xs text-gray-400 w-6 shrink-0 text-right" aria-hidden="true">
+        <span class="text-xs text-gray-500 dark:text-gray-400 w-6 shrink-0 text-right" aria-hidden="true">
           {{ row.item?.position + 1 }}
         </span>
         <img
@@ -43,7 +43,7 @@ function formatDuration(iso: string | null | undefined): string {
           <p class="text-sm font-medium line-clamp-2 leading-snug">{{ row.video?.title }}</p>
           <p class="text-xs text-gray-500 mt-0.5 truncate">{{ row.video?.channel_title }}</p>
         </div>
-        <span v-if="row.video?.duration" class="text-xs text-gray-400 shrink-0 tabular-nums">
+        <span v-if="row.video?.duration" class="text-xs text-gray-500 dark:text-gray-400 shrink-0 tabular-nums">
           {{ formatDuration(row.video.duration) }}
         </span>
       </button>

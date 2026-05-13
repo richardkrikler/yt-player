@@ -88,9 +88,12 @@ watch(() => props.videoId, (id) => {
           />
           <span>Auto-play</span>
         </label>
+        <!-- aria-disabled signals the inactive-component state to AT;
+             WCAG 1.4.3 exempts inactive UI components from contrast requirements. -->
         <label
           class="flex items-center gap-2 text-sm cursor-pointer select-none"
           :class="{ 'opacity-40 pointer-events-none': !autoPlay }"
+          :aria-disabled="!autoPlay ? 'true' : undefined"
         >
           <USwitch
             :model-value="randomNext"

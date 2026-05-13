@@ -118,14 +118,14 @@ function activateTransition() {
       </div>
 
       <!-- YouTube title (secondary, shown only when custom title is set) -->
-      <p v-if="playlist.customTitle" class="text-xs text-gray-400 truncate">
+      <p v-if="playlist.customTitle" class="text-xs text-gray-600 dark:text-gray-400 truncate">
         {{ playlist.title }}
       </p>
 
-      <p v-if="playlist.channelTitle" class="text-xs text-gray-500 mt-1 truncate">
+      <p v-if="playlist.channelTitle" class="text-xs text-gray-600 dark:text-gray-400 mt-1 truncate">
         {{ playlist.channelTitle }}
       </p>
-      <p class="text-xs text-gray-400 mt-1">
+      <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">
         {{ playlist.itemCount ?? '?' }} videos
         <span v-if="!playlist.videosCachedAt" class="ml-1 text-amber-500">· not fetched</span>
       </p>

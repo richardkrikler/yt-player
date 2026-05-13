@@ -20,15 +20,15 @@ async function disconnect() {
       </template>
       <dl class="flex flex-col gap-2 text-sm">
         <div class="flex justify-between">
-          <dt class="text-gray-500">Email</dt>
+          <dt class="text-gray-500 dark:text-gray-400">Email</dt>
           <dd class="font-medium">{{ user?.email }}</dd>
         </div>
         <div class="flex justify-between">
-          <dt class="text-gray-500">Display name</dt>
+          <dt class="text-gray-500 dark:text-gray-400">Display name</dt>
           <dd>{{ user?.displayName ?? '—' }}</dd>
         </div>
         <div class="flex justify-between">
-          <dt class="text-gray-500">Role</dt>
+          <dt class="text-gray-500 dark:text-gray-400">Role</dt>
           <dd>
             <UBadge :color="user?.role === 'admin' ? 'primary' : 'gray'" variant="soft" size="xs">
               {{ user?.role }}

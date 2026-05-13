@@ -31,7 +31,7 @@ async function refreshPlaylist(id: string) {
       <div class="overflow-x-auto">
         <table class="w-full text-sm border-collapse">
           <thead>
-            <tr class="border-b border-gray-200 dark:border-gray-700 text-left text-gray-500">
+            <tr class="border-b border-gray-200 dark:border-gray-700 text-left text-gray-500 dark:text-gray-400">
               <th class="py-2 pr-4 font-medium">Email</th>
               <th class="py-2 pr-4 font-medium">Name</th>
               <th class="py-2 pr-4 font-medium">Role</th>
@@ -46,7 +46,7 @@ async function refreshPlaylist(id: string) {
               class="border-b border-gray-100 dark:border-gray-800"
             >
               <td class="py-2 pr-4">{{ u.email }}</td>
-              <td class="py-2 pr-4 text-gray-500">{{ u.displayName ?? '—' }}</td>
+              <td class="py-2 pr-4 text-gray-500 dark:text-gray-400">{{ u.displayName ?? '—' }}</td>
               <td class="py-2 pr-4">
                 <UBadge :color="u.role === 'admin' ? 'primary' : 'gray'" variant="soft" size="xs">
                   {{ u.role }}
@@ -80,7 +80,7 @@ async function refreshPlaylist(id: string) {
       <div class="overflow-x-auto">
         <table class="w-full text-sm border-collapse">
           <thead>
-            <tr class="border-b border-gray-200 dark:border-gray-700 text-left text-gray-500">
+            <tr class="border-b border-gray-200 dark:border-gray-700 text-left text-gray-500 dark:text-gray-400">
               <th class="py-2 pr-4 font-medium">Title</th>
               <th class="py-2 pr-4 font-medium">Owner</th>
               <th class="py-2 pr-4 font-medium">Videos</th>
@@ -99,7 +99,7 @@ async function refreshPlaylist(id: string) {
                   {{ row.playlist.title }}
                 </NuxtLink>
               </td>
-              <td class="py-2 pr-4 text-gray-500 text-xs">{{ row.owner.email }}</td>
+              <td class="py-2 pr-4 text-gray-500 dark:text-gray-400 text-xs">{{ row.owner.email }}</td>
               <td class="py-2 pr-4">{{ row.playlist.itemCount }}</td>
               <td class="py-2 pr-4">
                 <UBadge
