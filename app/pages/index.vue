@@ -3,6 +3,20 @@ definePageMeta({ viewTransition: { fromTypes: ['vt-forward'] } })
 useHead({ title: 'My Playlists' })
 const { user } = useUserSession()
 const { playlists, loading, error, fetchPlaylists, importFromUrl, removePlaylist, refreshMetadata, fetchVideos, renamePlaylist } = usePlaylist()
+const fetchingIds = ref<Set<string>>(new Set())
+
+async function handleFetchVideos(id: string) {
+  fetchingIds.value = new Set([...fetchingIds.value, id])
+  try {
+    await fetchVideos(id)
+    const updated = await refreshMetadata(id)
+    const idx = playlists.value.findIndex(p => p.id === id)
+    if (idx !== -1) playlists.value[idx] = { ...playlists.value[idx], videosCachedAt: updated.videosCachedAt ?? Date.now() }
+  }
+  finally {
+    fetchingIds.value = new Set([...fetchingIds.value].filter(x => x !== id))
+  }
+}
 
 // import from YouTube state
 const showYTImport = ref(false)
@@ -162,8 +176,9 @@ async function addFromUrl() {
       <li v-for="pl in playlists" :key="pl.id">
         <PlaylistCard
           :playlist="pl"
+          :fetching="fetchingIds.has(pl.id)"
           @refresh="refreshMetadata(pl.id)"
-          @fetch-videos="fetchVideos(pl.id)"
+          @fetch-videos="handleFetchVideos(pl.id)"
           @remove="removePlaylist(pl.id)"
           @rename="renamePlaylist(pl.id, $event)"
         />

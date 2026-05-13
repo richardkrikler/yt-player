@@ -11,6 +11,7 @@ const props = defineProps<{
     thumbnailUrl?: string | null
     videosCachedAt?: number | null
   }
+  fetching?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -134,8 +135,10 @@ function activateTransition() {
           Refresh
         </UButton>
         <UButton
-          v-if="!playlist.videosCachedAt"
+          v-if="!playlist.videosCachedAt || fetching"
           size="xs" variant="ghost" icon="i-heroicons-arrow-down-tray"
+          :loading="fetching"
+          :disabled="fetching"
           @click="$emit('fetchVideos')"
         >
           Fetch
