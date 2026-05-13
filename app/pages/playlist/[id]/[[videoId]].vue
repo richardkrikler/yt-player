@@ -10,6 +10,20 @@ const {
   loadVideos, loadNextPage, loadPrevPage, seekToVideo, play, next, previous, random,
 } = usePlayer(playlistId)
 
+const { fetchVideos } = usePlaylist()
+const fetching = ref(false)
+
+async function handleFetchVideos() {
+  fetching.value = true
+  try {
+    await fetchVideos(playlistId.value)
+    await loadVideos()
+  }
+  finally {
+    fetching.value = false
+  }
+}
+
 const { user } = useUserSession()
 const userId = computed(() => user.value?.id)
 const { autoPlay, randomNext } = usePlayerSettings(userId, playlistId)
@@ -153,10 +167,22 @@ const displayVideos = computed(() =>
         </div>
         <div v-else class="aspect-video bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center text-gray-400">
           <div class="text-center">
-            <p class="text-lg">Select a video to play</p>
-            <UButton v-if="videos.length === 0 && !loading" class="mt-3" @click="$fetch(`/api/playlists/${playlistId}/fetch-videos`, { method: 'POST' }).then(loadVideos)">
-              Fetch videos
-            </UButton>
+            <template v-if="fetching">
+              <UIcon name="i-lucide-loader-circle" class="size-10 animate-spin mx-auto" />
+              <p class="text-sm mt-3">Fetching videos…</p>
+            </template>
+            <template v-else-if="videos.length > 0">
+              <p class="text-lg">Select a video to play</p>
+              <UButton class="mt-3" icon="i-heroicons-arrow-path" @click="random">
+                Random
+              </UButton>
+            </template>
+            <template v-else-if="!loading">
+              <p class="text-lg">No videos cached yet</p>
+              <UButton class="mt-3" @click="handleFetchVideos">
+                Fetch videos
+              </UButton>
+            </template>
           </div>
         </div>
       </div>
