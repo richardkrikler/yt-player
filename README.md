@@ -170,16 +170,18 @@ Creates a Debian 13 LXC, installs Node.js 24 and the latest release, and sets up
 
 ### Post-install configuration
 
+The install script pre-configures `NUXT_SESSION_PASSWORD`, `NUXT_TOKEN_ENCRYPTION_KEY`, and `DATABASE_URL` automatically. Only the Google API credentials need to be filled in manually.
+
 SSH into the LXC and edit the environment file:
 
 ```bash
 nano /opt/yt-player/.env
 ```
 
-Fill in the required secrets (see [Environment Variables](#environment-variables)), then:
+Fill in the Google credentials (see [Environment Variables](#environment-variables)), then:
 
 ```bash
-systemctl restart yt-player
+systemctl start yt-player
 ```
 
 The app is now available at `http://<LXC_IP>:3000`.

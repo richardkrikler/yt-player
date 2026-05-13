@@ -31,7 +31,15 @@ mkdir -p /opt/yt-player/{app,data}
 curl -fsSL "${FORGEJO}/${REPO}/releases/download/${LATEST}/yt-player.tar.gz" \
   | tar -xz -C /opt/yt-player/app
 echo "$LATEST" >/opt/yt-player/version
+
+echo "Configuring environment..."
 curl -fsSL "${FORGEJO}/${REPO}/raw/tag/${LATEST}/.env.example" -o /opt/yt-player/.env
+# Pin the database path
+sed -i "s|^DATABASE_URL=.*|DATABASE_URL=/opt/yt-player/data/yt-player.db|" /opt/yt-player/.env
+# Generate required secrets
+sed -i "s|^NUXT_SESSION_PASSWORD=.*|NUXT_SESSION_PASSWORD=$(openssl rand -hex 32)|" /opt/yt-player/.env
+sed -i "s|^NUXT_TOKEN_ENCRYPTION_KEY=.*|NUXT_TOKEN_ENCRYPTION_KEY=$(openssl rand -hex 32)|" /opt/yt-player/.env
+
 chown -R yt-player:yt-player /opt/yt-player
 
 echo "Creating systemd service..."
@@ -44,7 +52,6 @@ After=network.target
 Type=simple
 WorkingDirectory=/opt/yt-player/app
 EnvironmentFile=/opt/yt-player/.env
-Environment=DATABASE_URL=/opt/yt-player/data/yt-player.db
 ExecStart=/usr/bin/node /opt/yt-player/app/server/index.mjs
 Restart=on-failure
 RestartSec=5
@@ -88,6 +95,7 @@ systemctl daemon-reload
 
 echo ""
 echo "Install complete (${LATEST})."
-echo "  1. Edit /opt/yt-player/.env"
-echo "  2. systemctl start yt-player"
+echo "  Session secrets and DB path are pre-configured."
+echo "  Add Google API credentials to /opt/yt-player/.env, then:"
+echo "    systemctl start yt-player"
 echo ""
