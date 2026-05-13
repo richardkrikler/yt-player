@@ -158,7 +158,7 @@ Stops the service, downloads the latest release tarball from Forgejo, extracts i
 bash -c "$(curl -fsSL http://git.home.richardkrikler.at:3000/richardkrikler/yt-player/raw/branch/main/proxmox/ct/yt-player.sh)"
 ```
 
-Creates a Debian 13 LXC, installs Node.js 24 and the latest release, and sets up a systemd service. Defaults:
+Creates a Debian 13 LXC, installs Node.js 24, Caddy (HTTPS with internal CA), and the latest release. Defaults:
 
 | | |
 |---|---|
@@ -184,7 +184,7 @@ Fill in the Google credentials (see [Environment Variables](#environment-variabl
 systemctl start yt-player
 ```
 
-The app is now available at `http://<LXC_IP>:3000`.
+The app is available at `https://yt-player.home.richardkrikler.at` — Caddy handles TLS with its internal CA. Point `yt-player.home.richardkrikler.at` → LXC IP in AdGuard Home (or your local DNS).
 
 **Paths inside the LXC:**
 
@@ -194,35 +194,11 @@ The app is now available at `http://<LXC_IP>:3000`.
 | `/opt/yt-player/data/yt-player.db` | SQLite database |
 | `/opt/yt-player/.env` | Environment / secrets |
 | `/opt/yt-player/version` | Installed version tag |
+| `/etc/caddy/Caddyfile` | Caddy reverse proxy config |
 
-### Optional: Caddy reverse proxy with HTTPS
+The default Caddyfile uses `yt-player.home.richardkrikler.at`. Caddy automatically handles HTTP→HTTPS redirect when a hostname is specified — no explicit `:80` block needed.
 
-```bash
-# Inside the LXC
-apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list
-apt update && apt install -y caddy
-```
-
-`/etc/caddy/Caddyfile`:
-```
-YOUR_LOCAL_DOMAIN {
-    reverse_proxy localhost:3000
-    tls internal
-}
-```
-
-```bash
-systemctl reload caddy
-```
-
-Add a DNS rewrite in AdGuard Home (or your local DNS):
-- Domain: `YOUR_LOCAL_DOMAIN` → LXC IP
-
-Update `NUXT_GOOGLE_REDIRECT_URI` in `.env` to `https://YOUR_LOCAL_DOMAIN/api/youtube/callback`, then `systemctl restart yt-player`.
-
-#### Trust Caddy's Root CA (once per device)
+### Trust Caddy's Root CA (once per device)
 
 ```bash
 # Copy the CA cert from the LXC to your machine

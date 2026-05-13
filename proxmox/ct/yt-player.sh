@@ -51,6 +51,6 @@ msg_ok "Installation complete"
 
 IP=$(pct exec "$CTID" -- hostname -I 2>/dev/null | awk '{print $1}')
 printf "\n ${GN}✔ %s is ready!${CL}\n" "$APP"
-printf "   Access:  http://%s:3000\n" "$IP"
+printf "   Access:  https://yt-player.home.richardkrikler.at  (trust Caddy CA first — see README)\n"
 printf "   Config:  pct exec %s -- nano /opt/yt-player/.env\n" "$CTID"
 printf "   Restart: pct exec %s -- systemctl restart yt-player\n\n" "$CTID"

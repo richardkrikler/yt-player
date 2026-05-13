@@ -10,11 +10,21 @@ echo "Updating OS..."
 apt-get update -qq && apt-get upgrade -y -qq
 
 echo "Installing dependencies..."
-apt-get install -y curl jq >/dev/null 2>&1
+apt-get install -y curl jq debian-keyring debian-archive-keyring apt-transport-https >/dev/null 2>&1
 
 echo "Installing Node.js 24..."
 curl -fsSL https://deb.nodesource.com/setup_24.x | bash - >/dev/null 2>&1
 apt-get install -y nodejs >/dev/null 2>&1
+
+echo "Installing Caddy..."
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' \
+  | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg 2>/dev/null
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' \
+  | tee /etc/apt/sources.list.d/caddy-stable.list >/dev/null
+chmod o+r /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+chmod o+r /etc/apt/sources.list.d/caddy-stable.list
+apt-get update -qq
+apt-get install -y caddy >/dev/null 2>&1
 
 echo "Fetching latest release..."
 LATEST=$(curl -fsSL "${FORGEJO}/api/v1/repos/${REPO}/releases/latest" | jq -r '.tag_name')
@@ -22,6 +32,7 @@ if [[ -z "$LATEST" || "$LATEST" == "null" ]]; then
   echo "ERROR: Could not fetch release from ${FORGEJO}" >&2
   exit 1
 fi
+
 echo "Creating service user..."
 adduser --system --shell /bin/bash --gecos 'YT Player' \
   --group --disabled-password --home /home/yt-player yt-player
@@ -42,7 +53,7 @@ sed -i "s|^NUXT_TOKEN_ENCRYPTION_KEY=.*|NUXT_TOKEN_ENCRYPTION_KEY=$(openssl rand
 
 chown -R yt-player:yt-player /opt/yt-player
 
-echo "Creating systemd service..."
+echo "Creating yt-player service..."
 cat >/etc/systemd/system/yt-player.service <<EOF
 [Unit]
 Description=YT Player
@@ -62,6 +73,16 @@ Group=yt-player
 WantedBy=multi-user.target
 EOF
 systemctl enable -q yt-player
+
+echo "Configuring Caddy..."
+cat >/etc/caddy/Caddyfile <<'EOF'
+yt-player.home.richardkrikler.at {
+    reverse_proxy localhost:3000
+    tls internal
+}
+EOF
+systemctl enable -q caddy
+systemctl reload-or-restart caddy
 
 echo "Creating update command..."
 cat >/usr/bin/update <<'SCRIPT'
@@ -95,7 +116,8 @@ systemctl daemon-reload
 
 echo ""
 echo "Install complete (${LATEST})."
-echo "  Session secrets and DB path are pre-configured."
+echo "  Secrets and DB path are pre-configured."
 echo "  Add Google API credentials to /opt/yt-player/.env, then:"
 echo "    systemctl start yt-player"
+echo "  Access: https://yt-player.home.richardkrikler.at  (trust Caddy CA — see README)"
 echo ""
