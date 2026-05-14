@@ -11,6 +11,15 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Cannot delete your own account' })
   }
 
+  // Refuse if this would remove the last admin
+  const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, id))
+  if (target?.role === 'admin') {
+    const admins = await db.select({ id: users.id }).from(users).where(eq(users.role, 'admin'))
+    if (admins.length <= 1) {
+      throw createError({ statusCode: 400, message: 'Cannot delete the last admin account' })
+    }
+  }
+
   await db.delete(users).where(eq(users.id, id))
   return { ok: true }
 })

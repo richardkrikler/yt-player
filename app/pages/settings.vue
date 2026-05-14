@@ -5,6 +5,7 @@ const route = useRoute()
 const justConnected = computed(() => route.query.connected === '1')
 
 async function disconnect() {
+  if (!confirm('Disconnect your YouTube account?\nYou will no longer be able to import private playlists until you reconnect.')) return
   await $fetch('/api/youtube', { method: 'DELETE' })
   await refreshSession()
 }

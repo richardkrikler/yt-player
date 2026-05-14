@@ -3,6 +3,12 @@ definePageMeta({ viewTransition: { fromTypes: ['vt-forward'] } })
 useHead({ title: 'My Playlists' })
 const { user } = useUserSession()
 const { playlists, loading, error, fetchPlaylists, importFromUrl, removePlaylist, refreshMetadata, fetchVideos, renamePlaylist } = usePlaylist()
+
+async function handleRemove(pl: any) {
+  const label = pl.customTitle || pl.title
+  if (!confirm(`Remove "${label}" from your library?\nThis cannot be undone.`)) return
+  await removePlaylist(pl.id)
+}
 const fetchingIds = ref<Set<string>>(new Set())
 
 async function handleFetchVideos(id: string) {
@@ -179,7 +185,7 @@ async function addFromUrl() {
           :fetching="fetchingIds.has(pl.id)"
           @refresh="refreshMetadata(pl.id)"
           @fetch-videos="handleFetchVideos(pl.id)"
-          @remove="removePlaylist(pl.id)"
+          @remove="handleRemove(pl)"
           @rename="renamePlaylist(pl.id, $event)"
         />
       </li>

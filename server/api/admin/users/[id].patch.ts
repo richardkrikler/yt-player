@@ -12,6 +12,17 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'role must be admin or user' })
   }
 
+  // Refuse if demoting the last admin
+  if (role === 'user') {
+    const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, id))
+    if (target?.role === 'admin') {
+      const admins = await db.select({ id: users.id }).from(users).where(eq(users.role, 'admin'))
+      if (admins.length <= 1) {
+        throw createError({ statusCode: 400, message: 'Cannot demote the last admin account' })
+      }
+    }
+  }
+
   const [updated] = await db.update(users)
     .set({ role })
     .where(eq(users.id, id))

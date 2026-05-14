@@ -5,13 +5,16 @@ useHead({ title: 'Admin' })
 const { data: users, refresh: refreshUsers } = await useFetch('/api/admin/users')
 const { data: playlists } = await useFetch('/api/admin/playlists')
 
+const adminCount = computed(() => (users.value ?? []).filter((u: any) => u.role === 'admin').length)
+const isLastAdmin = (u: any) => u.role === 'admin' && adminCount.value === 1
+
 async function setRole(id: number, role: 'admin' | 'user') {
   await $fetch(`/api/admin/users/${id}`, { method: 'PATCH', body: { role } })
   await refreshUsers()
 }
 
-async function deleteUser(id: number) {
-  if (!confirm('Delete this user and all their data?')) return
+async function deleteUser(id: number, email: string) {
+  if (!confirm(`Delete user "${email}" and all their data?\nThis cannot be undone.`)) return
   await $fetch(`/api/admin/users/${id}`, { method: 'DELETE' })
   await refreshUsers()
 }
@@ -60,11 +63,20 @@ async function refreshPlaylist(id: string) {
                 <UButton
                   size="xs"
                   variant="ghost"
+                  :disabled="isLastAdmin(u)"
+                  :title="isLastAdmin(u) ? 'Cannot demote the last admin' : undefined"
                   @click="setRole(u.id, u.role === 'admin' ? 'user' : 'admin')"
                 >
                   Make {{ u.role === 'admin' ? 'user' : 'admin' }}
                 </UButton>
-                <UButton size="xs" variant="ghost" color="error" @click="deleteUser(u.id)">
+                <UButton
+                  size="xs"
+                  variant="ghost"
+                  color="error"
+                  :disabled="isLastAdmin(u)"
+                  :title="isLastAdmin(u) ? 'Cannot delete the last admin' : undefined"
+                  @click="deleteUser(u.id, u.email)"
+                >
                   Delete
                 </UButton>
               </td>
