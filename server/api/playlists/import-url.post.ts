@@ -34,7 +34,6 @@ export default defineEventHandler(async (event) => {
 
     await db.insert(playlists).values({
       id: playlistId,
-      ownerUserId: user.id,
       title: item.snippet?.title ?? 'Untitled',
       description: item.snippet?.description ?? null,
       channelTitle: item.snippet?.channelTitle ?? null,

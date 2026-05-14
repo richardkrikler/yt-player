@@ -1,6 +1,6 @@
 import { db } from '../../../../db'
 import { playlists } from '../../../../db/schema'
-import { getYoutubeClientForUser, getPublicYoutubeClient } from '../../../../utils/youtube'
+import { getYoutubeClientForPlaylist, getPublicYoutubeClient } from '../../../../utils/youtube'
 import { requireAdmin } from '../../../../utils/requireRole'
 import { eq } from 'drizzle-orm'
 
@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
 
   const youtube = playlist.privacyStatus === 'public'
     ? getPublicYoutubeClient()
-    : await getYoutubeClientForUser(playlist.ownerUserId)
+    : await getYoutubeClientForPlaylist(id)
 
   const res = await youtube.playlists.list({
     part: ['snippet', 'contentDetails', 'status'],

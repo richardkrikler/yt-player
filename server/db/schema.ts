@@ -17,7 +17,6 @@ export const users = sqliteTable('users', {
 
 export const playlists = sqliteTable('playlists', {
   id: text('id').primaryKey(),
-  ownerUserId: integer('owner_user_id').notNull().references(() => users.id),
   title: text('title').notNull(),
   description: text('description'),
   channelTitle: text('channel_title'),

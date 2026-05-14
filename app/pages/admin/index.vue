@@ -94,7 +94,7 @@ async function refreshPlaylist(id: string) {
           <thead>
             <tr class="border-b border-gray-200 dark:border-gray-700 text-left text-gray-500 dark:text-gray-400">
               <th class="py-2 pr-4 font-medium">Title</th>
-              <th class="py-2 pr-4 font-medium">Owner</th>
+              <th class="py-2 pr-4 font-medium">Users</th>
               <th class="py-2 pr-4 font-medium">Videos</th>
               <th class="py-2 pr-4 font-medium">Privacy</th>
               <th class="py-2 font-medium">Actions</th>
@@ -111,7 +111,7 @@ async function refreshPlaylist(id: string) {
                   {{ row.playlist.title }}
                 </NuxtLink>
               </td>
-              <td class="py-2 pr-4 text-gray-500 dark:text-gray-400 text-xs">{{ row.owner.email }}</td>
+              <td class="py-2 pr-4 text-gray-500 dark:text-gray-400">{{ row.userCount }}</td>
               <td class="py-2 pr-4">{{ row.playlist.itemCount }}</td>
               <td class="py-2 pr-4">
                 <UBadge

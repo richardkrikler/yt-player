@@ -1,7 +1,7 @@
 import { google } from 'googleapis'
 import { db } from '../db'
-import { users } from '../db/schema'
-import { eq } from 'drizzle-orm'
+import { users, userPlaylists } from '../db/schema'
+import { eq, and, isNotNull } from 'drizzle-orm'
 import { encrypt, decrypt } from './crypto'
 
 function createOAuthClient() {
@@ -49,6 +49,25 @@ export async function getYoutubeClientForUser(userId: number) {
   })
 
   return google.youtube({ version: 'v3', auth: client })
+}
+
+/** Find any user who has this playlist and has YouTube connected, and return their client. */
+export async function getYoutubeClientForPlaylist(playlistId: string) {
+  const row = await db
+    .select({ userId: userPlaylists.userId })
+    .from(userPlaylists)
+    .innerJoin(users, eq(users.id, userPlaylists.userId))
+    .where(and(
+      eq(userPlaylists.playlistId, playlistId),
+      isNotNull(users.accessToken),
+      isNotNull(users.refreshToken),
+    ))
+    .get()
+
+  if (!row) {
+    throw createError({ statusCode: 400, message: 'No connected YouTube account available for this playlist' })
+  }
+  return getYoutubeClientForUser(row.userId)
 }
 
 export function getPublicYoutubeClient() {

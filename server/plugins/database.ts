@@ -19,7 +19,6 @@ export default defineNitroPlugin(() => {
 
     CREATE TABLE IF NOT EXISTS playlists (
       id TEXT PRIMARY KEY,
-      owner_user_id INTEGER NOT NULL REFERENCES users(id),
       title TEXT NOT NULL,
       description TEXT,
       channel_title TEXT,
@@ -70,12 +69,19 @@ export default defineNitroPlugin(() => {
     );
   `)
 
-  // Migrations — add columns that may not exist in older DBs
+  // Migrations — add/remove columns that may differ in older DBs
   const hasCustomTitle = (sqlite.prepare(
     `SELECT COUNT(*) as n FROM pragma_table_info('user_playlists') WHERE name = 'custom_title'`,
   ).get() as { n: number }).n
   if (!hasCustomTitle) {
     sqlite.exec(`ALTER TABLE user_playlists ADD COLUMN custom_title TEXT`)
+  }
+
+  const hasOwnerUserId = (sqlite.prepare(
+    `SELECT COUNT(*) as n FROM pragma_table_info('playlists') WHERE name = 'owner_user_id'`,
+  ).get() as { n: number }).n
+  if (hasOwnerUserId) {
+    sqlite.exec(`ALTER TABLE playlists DROP COLUMN owner_user_id`)
   }
 
   // FTS5 — always drop and recreate so column names stay in sync with the
