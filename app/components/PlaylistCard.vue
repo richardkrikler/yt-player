@@ -12,6 +12,7 @@ const props = defineProps<{
     videosCachedAt?: number | null
   }
   fetching?: boolean
+  reordering?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -59,8 +60,16 @@ function activateTransition() {
 </script>
 
 <template>
-  <article class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
-    <NuxtLink :to="`/playlist/${playlist.id}`" class="block" @click="activateTransition">
+  <article
+    class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden transition-shadow"
+    :class="reordering ? 'cursor-grab active:cursor-grabbing shadow-lg ring-2 ring-primary-500/30' : 'hover:shadow-md'"
+  >
+    <NuxtLink
+      :to="reordering ? undefined : `/playlist/${playlist.id}`"
+      class="block"
+      :class="reordering ? 'pointer-events-none select-none' : ''"
+      @click="reordering ? undefined : activateTransition()"
+    >
       <div class="aspect-video bg-gray-100 dark:bg-gray-800 relative">
         <img
           v-if="playlist.thumbnailUrl"
@@ -130,7 +139,8 @@ function activateTransition() {
         <span v-if="!playlist.videosCachedAt" class="ml-1 text-amber-500">· not fetched</span>
       </p>
 
-      <div class="flex gap-2 mt-3">
+      <!-- Normal actions -->
+      <div v-if="!reordering" class="flex gap-2 mt-3">
         <UButton size="xs" variant="ghost" icon="i-heroicons-arrow-path" @click="$emit('refresh')">
           Refresh
         </UButton>
@@ -146,6 +156,12 @@ function activateTransition() {
         <UButton size="xs" variant="ghost" color="error" icon="i-heroicons-trash" @click="$emit('remove')">
           Remove
         </UButton>
+      </div>
+
+      <!-- Reorder hint -->
+      <div v-else class="flex items-center gap-1.5 mt-3 text-xs text-gray-400 select-none">
+        <UIcon name="i-heroicons-bars-3" class="size-4 shrink-0" aria-hidden="true" />
+        Drag to reorder
       </div>
     </div>
   </article>

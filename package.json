@@ -2,7 +2,9 @@
   "name": "yt-player",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=24" },
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "nuxt dev",
     "build": "nuxt build",
@@ -19,13 +21,15 @@
     "googleapis": "^171.4.0",
     "nuxt": "^4.4.4",
     "nuxt-auth-utils": "^0.5.29",
+    "sortablejs": "^1.15.7",
     "vue": "^3.5.33",
     "vue-router": "^5.0.6"
   },
   "devDependencies": {
     "@nuxt/devtools": "^3.2.4",
-    "@types/node": "^25.6.2",
     "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^25.6.2",
+    "@types/sortablejs": "^1.15.9",
     "drizzle-kit": "^0.31.10",
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3"

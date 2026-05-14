@@ -33,6 +33,7 @@ export const userPlaylists = sqliteTable('user_playlists', {
   userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   playlistId: text('playlist_id').notNull().references(() => playlists.id, { onDelete: 'cascade' }),
   customTitle: text('custom_title'),
+  position: integer('position'),  // null = never manually sorted; lower = earlier in list
   addedAt: integer('added_at').notNull().$defaultFn(() => Date.now()),
 }, (t) => [primaryKey({ columns: [t.userId, t.playlistId] })])
 

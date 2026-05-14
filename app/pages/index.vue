@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type Sortable from 'sortablejs'
+
 definePageMeta({ viewTransition: { fromTypes: ['vt-forward'] } })
 useHead({ title: 'My Playlists' })
 const { user } = useUserSession()
@@ -9,6 +11,38 @@ async function handleRemove(pl: any) {
   if (!confirm(`Remove "${label}" from your library?\nThis cannot be undone.`)) return
   await removePlaylist(pl.id)
 }
+
+// ── Drag-to-reorder ───────────────────────────────────────────────────
+const gridEl = ref<HTMLElement | null>(null)
+const reordering = ref(false)
+let sortable: InstanceType<typeof Sortable> | null = null
+
+async function toggleReorder() {
+  if (reordering.value) {
+    reordering.value = false
+    sortable?.destroy()
+    sortable = null
+    return
+  }
+  reordering.value = true
+  await nextTick()
+  if (!gridEl.value) return
+  const { default: SortableJS } = await import('sortablejs')
+  sortable = new SortableJS(gridEl.value, {
+    animation: 200,
+    ghostClass: 'sortable-ghost',
+    onEnd(evt) {
+      const { oldIndex, newIndex } = evt
+      if (oldIndex === undefined || newIndex === undefined || oldIndex === newIndex) return
+      const arr = [...playlists.value]
+      const [moved] = arr.splice(oldIndex, 1)
+      arr.splice(newIndex, 0, moved)
+      playlists.value = arr
+      $fetch('/api/playlists/order', { method: 'PATCH', body: { ids: arr.map(p => p.id) } })
+    },
+  })
+}
+
 const fetchingIds = ref<Set<string>>(new Set())
 
 async function handleFetchVideos(id: string) {
@@ -99,14 +133,22 @@ async function addFromUrl() {
       <h1 class="text-xl font-bold">My Playlists</h1>
       <div class="flex gap-2 flex-wrap">
         <UButton
-          v-if="user?.youtubeConnected"
+          v-if="playlists.length > 1"
+          :icon="reordering ? 'i-heroicons-check' : 'i-heroicons-bars-3-bottom-left'"
+          :variant="reordering ? 'solid' : 'outline'"
+          @click="toggleReorder"
+        >
+          {{ reordering ? 'Done' : 'Reorder' }}
+        </UButton>
+        <UButton
+          v-if="user?.youtubeConnected && !reordering"
           icon="i-heroicons-arrow-down-tray"
           variant="outline"
           @click="loadYTPlaylists"
         >
           Import from YouTube
         </UButton>
-        <NuxtLink v-else to="/settings">
+        <NuxtLink v-else-if="!reordering && !user?.youtubeConnected" to="/settings">
           <UButton variant="outline" icon="i-simple-icons-youtube">Connect YouTube</UButton>
         </NuxtLink>
       </div>
@@ -176,6 +218,7 @@ async function addFromUrl() {
 
     <ul
       v-else
+      ref="gridEl"
       class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
       aria-label="Playlist collection"
     >
@@ -183,6 +226,7 @@ async function addFromUrl() {
         <PlaylistCard
           :playlist="pl"
           :fetching="fetchingIds.has(pl.id)"
+          :reordering="reordering"
           @refresh="refreshMetadata(pl.id)"
           @fetch-videos="handleFetchVideos(pl.id)"
           @remove="handleRemove(pl)"

@@ -17,6 +17,15 @@ export default defineNuxtConfig({
       htmlAttrs: { lang: 'en' },
       titleTemplate: '%s — YT Player',
       title: 'YT Player',
+      link: [
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+      ],
+    },
+  },
+
+  vite: {
+    optimizeDeps: {
+      include: ['sortablejs'],
     },
   },
 

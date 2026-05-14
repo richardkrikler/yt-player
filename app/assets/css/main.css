@@ -40,6 +40,14 @@
   }
 }
 
+/* ── SortableJS ───────────────────────────────────────────────────── */
+/* .sortable-ghost is injected at runtime so Tailwind won't purge it  */
+.sortable-ghost {
+  opacity: 0.25;
+  border-radius: 0.75rem;
+  background: var(--ui-primary);
+}
+
 /* ── View Transitions ─────────────────────────────────────────────── */
 
 /* Header stays locked */

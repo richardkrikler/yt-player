@@ -77,6 +77,13 @@ export default defineNitroPlugin(() => {
     sqlite.exec(`ALTER TABLE user_playlists ADD COLUMN custom_title TEXT`)
   }
 
+  const hasPosition = (sqlite.prepare(
+    `SELECT COUNT(*) as n FROM pragma_table_info('user_playlists') WHERE name = 'position'`,
+  ).get() as { n: number }).n
+  if (!hasPosition) {
+    sqlite.exec(`ALTER TABLE user_playlists ADD COLUMN position INTEGER`)
+  }
+
   const hasOwnerUserId = (sqlite.prepare(
     `SELECT COUNT(*) as n FROM pragma_table_info('playlists') WHERE name = 'owner_user_id'`,
   ).get() as { n: number }).n
