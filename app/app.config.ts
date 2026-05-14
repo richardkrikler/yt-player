@@ -1,5 +1,8 @@
 export default defineAppConfig({
     ui: {
+        colors: {
+            primary: 'emerald',
+        },
         header: {
             slots: {
                 center: 'hidden lg:flex flex-2',
