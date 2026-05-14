@@ -59,7 +59,7 @@ async function register() {
     <template #footer>
       <p class="text-sm text-center text-gray-500">
         Already have an account?
-        <NuxtLink to="/login" class="text-primary-600 dark:text-primary-400 hover:underline">
+        <NuxtLink to="/login" class="text-primary-600 dark:text-primary-400 hover:underline transition-colors">
           Sign in
         </NuxtLink>
       </p>

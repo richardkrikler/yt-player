@@ -1,6 +1,45 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
+/* ── Interactive baseline ─────────────────────────────────────────── */
+/*
+ * Focus ring lives in @layer base so Nuxt UI's focus:outline-none (in
+ * @layer utilities) correctly suppresses it on managed components that
+ * already provide their own indicator (solid outline, ring, bg-tint).
+ * Plain custom elements — pencil button, mobile sign-out, bare links —
+ * carry none of those classes and pick up our ring naturally.
+ *
+ * outline-color is pre-primed outside :focus-visible so transition-colors
+ * never flashes from currentColor when the ring first appears.
+ */
+@layer base {
+  a,
+  button {
+    cursor: pointer;
+    outline-color: var(--ui-primary); /* pre-prime; no color flash on focus */
+  }
+
+  /* hover — links get an opacity fade; buttons are left to Nuxt UI's
+     own transition-colors so the two mechanisms don't stack/conflict. */
+  a {
+    transition: opacity 150ms ease;
+  }
+
+  a:hover {
+    opacity: 0.8;
+  }
+
+  /* --ui-primary = primary-500 light / primary-400 dark (Nuxt UI colors plugin). */
+  a:focus-visible,
+  button:focus-visible {
+    outline-style: solid;
+    outline-width: 2px;
+    outline-color: var(--ui-primary);
+    outline-offset: 2px;
+    border-radius: var(--ui-radius, 0.25rem);
+  }
+}
+
 /* ── View Transitions ─────────────────────────────────────────────── */
 
 /* Header stays locked */

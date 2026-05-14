@@ -64,7 +64,7 @@ async function refreshPlaylist(id: string) {
                 >
                   Make {{ u.role === 'admin' ? 'user' : 'admin' }}
                 </UButton>
-                <UButton size="xs" variant="ghost" color="red" @click="deleteUser(u.id)">
+                <UButton size="xs" variant="ghost" color="error" @click="deleteUser(u.id)">
                   Delete
                 </UButton>
               </td>
@@ -94,7 +94,7 @@ async function refreshPlaylist(id: string) {
               :key="row.playlist.id"
               class="border-b border-gray-100 dark:border-gray-800"
             >
-              <td class="py-2 pr-4">
+              <td class="py-2 pr-4 pl-1">
                 <NuxtLink :to="`/playlist/${row.playlist.id}`" class="hover:text-primary-600 dark:hover:text-primary-400">
                   {{ row.playlist.title }}
                 </NuxtLink>

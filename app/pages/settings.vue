@@ -52,7 +52,7 @@ async function disconnect() {
           <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-green-500" aria-hidden="true" />
           <span class="text-sm">Connected</span>
         </div>
-        <UButton size="sm" color="red" variant="ghost" @click="disconnect">
+        <UButton size="sm" color="error" variant="ghost" @click="disconnect">
           Disconnect
         </UButton>
       </div>

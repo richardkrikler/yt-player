@@ -28,12 +28,12 @@ const { data: rows, pending } = await useFetch('/api/playlists/shared')
           </NuxtLink>
           <div class="p-4">
             <NuxtLink :to="`/playlist/${row.playlist.id}`">
-              <h2 class="font-semibold text-sm line-clamp-2 hover:text-primary-600 dark:hover:text-primary-400">
+              <h2 class="font-semibold text-sm line-clamp-2">
                 {{ row.playlist.title }}
               </h2>
             </NuxtLink>
-            <p class="text-xs text-gray-400 mt-1">{{ row.playlist.itemCount }} videos</p>
-            <p class="text-xs text-gray-500 mt-1">
+            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">{{ row.playlist.itemCount }} videos</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Shared by {{ row.sharedBy.displayName ?? row.sharedBy.email }}
             </p>
           </div>

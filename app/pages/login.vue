@@ -52,7 +52,7 @@ async function login() {
     <template #footer>
       <p class="text-sm text-center text-gray-500">
         No account?
-        <NuxtLink to="/register" class="text-primary-600 dark:text-primary-400 hover:underline">
+        <NuxtLink to="/register" class="text-primary-600 dark:text-primary-400 hover:underline transition-colors">
           Register
         </NuxtLink>
       </p>

@@ -102,13 +102,13 @@ function activateTransition() {
           <NuxtLink :to="`/playlist/${playlist.id}`" class="flex-1 min-w-0" @click="activateTransition">
             <h2
               ref="titleEl"
-              class="font-semibold text-sm leading-snug line-clamp-2 hover:text-primary-600 dark:hover:text-primary-400"
+              class="font-semibold text-sm leading-snug line-clamp-2"
             >
               {{ playlist.customTitle || playlist.title }}
             </h2>
           </NuxtLink>
           <button
-            class="shrink-0 opacity-60 lg:opacity-0 lg:group-hover:opacity-60 hover:!opacity-100 transition-opacity mt-0.5"
+            class="shrink-0 size-4 flex items-center justify-center opacity-60 lg:opacity-0 lg:group-hover:opacity-60 hover:!opacity-100 focus-visible:!opacity-100 transition-opacity rounded-sm mt-0.5"
             aria-label="Edit title"
             @click.prevent="startEdit"
           >
@@ -143,7 +143,7 @@ function activateTransition() {
         >
           Fetch
         </UButton>
-        <UButton size="xs" variant="ghost" color="red" icon="i-heroicons-trash" @click="$emit('remove')">
+        <UButton size="xs" variant="ghost" color="error" icon="i-heroicons-trash" @click="$emit('remove')">
           Remove
         </UButton>
       </div>

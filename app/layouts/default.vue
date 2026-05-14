@@ -30,12 +30,11 @@ async function logout() {
 
 <template>
   <div class="h-screen overflow-hidden flex flex-col bg-gray-50 dark:bg-gray-950">
-    <UHeader style="view-transition-name: site-header">
-      <template #title>
-        <NuxtLink to="/" class="font-bold text-lg text-primary-600 dark:text-primary-400">
-          YT Player
-        </NuxtLink>
-      </template>
+    <UHeader
+      style="view-transition-name: site-header"
+      :ui="{ title: 'shrink-0 font-bold text-lg text-primary-600 dark:text-primary-400' }"
+    >
+      <template #title>YT Player</template>
 
       <div class="flex-2 flex justify-center px-4">
         <AppSearchBar class="max-w-2xl w-full" />
