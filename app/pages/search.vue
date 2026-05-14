@@ -211,8 +211,12 @@ function pickChannel(name: string) {
   channelDropdownOpen.value = false
 }
 
-function onChannelFocusOut(e: FocusEvent) {
-  if (!channelContainerEl.value?.contains(e.relatedTarget as Node)) channelDropdownOpen.value = false
+let channelFocusOutTimer: ReturnType<typeof setTimeout>
+function onChannelFocusOut() {
+  clearTimeout(channelFocusOutTimer)
+  channelFocusOutTimer = setTimeout(() => {
+    if (!channelContainerEl.value?.contains(document.activeElement)) channelDropdownOpen.value = false
+  }, 150)
 }
 </script>
 

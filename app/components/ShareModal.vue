@@ -56,8 +56,12 @@ function pick(u: UserResult) {
   dropdownOpen.value = false
 }
 
-function onFocusOut(e: FocusEvent) {
-  if (!containerEl.value?.contains(e.relatedTarget as Node)) dropdownOpen.value = false
+let focusOutTimer: ReturnType<typeof setTimeout>
+function onFocusOut() {
+  clearTimeout(focusOutTimer)
+  focusOutTimer = setTimeout(() => {
+    if (!containerEl.value?.contains(document.activeElement)) dropdownOpen.value = false
+  }, 150)
 }
 
 // ── Share ────────────────────────────────────────────────────────────

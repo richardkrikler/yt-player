@@ -9,8 +9,16 @@ function resultHref(result: any) {
   return `/playlist/${result.item?.playlistId}/${result.video?.id}`
 }
 
-function onFocusOut(e: FocusEvent) {
-  if (!containerEl.value?.contains(e.relatedTarget as Node)) clear()
+// ── Focus-out: delay so touch taps can complete before we clear ───────
+// iOS does not set relatedTarget on touch-triggered focusout events, so
+// contains(null) always returns false — without the delay the dropdown
+// is destroyed before the tap's click event fires.
+let focusOutTimer: ReturnType<typeof setTimeout>
+function onFocusOut() {
+  clearTimeout(focusOutTimer)
+  focusOutTimer = setTimeout(() => {
+    if (!containerEl.value?.contains(document.activeElement)) clear()
+  }, 150)
 }
 
 function goToSearchPage() {
@@ -19,6 +27,7 @@ function goToSearchPage() {
   clear()
 }
 
+// Keyboard: Escape closes; Enter navigates (desktop / hardware keyboards)
 function onKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') { clear(); return }
   if (e.key === 'Enter') goToSearchPage()
@@ -29,27 +38,34 @@ watch(route, clear)
 
 <template>
   <div ref="containerEl" class="relative w-full" @focusout="onFocusOut" @keydown="onKeydown">
-    <UInput
-      v-model="query"
-      placeholder="Search videos…"
-      :loading="loading"
-      class="w-full"
-    >
-      <template #leading>
-        <button
-          type="button"
-          class="flex items-center justify-center size-5 shrink-0"
-          :class="query.trim().length >= 2
-            ? 'text-primary-500 dark:text-primary-400 cursor-pointer'
-            : 'text-gray-400 pointer-events-none'"
-          :tabindex="query.trim().length >= 2 ? 0 : -1"
-          :aria-label="query.trim().length >= 2 ? 'Open search page' : undefined"
-          @click.stop="goToSearchPage"
-        >
-          <UIcon name="i-heroicons-magnifying-glass" class="size-5" />
-        </button>
-      </template>
-    </UInput>
+    <!--
+      Wrapped in a <form> so the iOS virtual keyboard's "Go"/"Search" action
+      fires a submit event, which is far more reliable than keydown on mobile.
+    -->
+    <form @submit.prevent="goToSearchPage">
+      <UInput
+        v-model="query"
+        placeholder="Search videos…"
+        :loading="loading"
+        class="w-full"
+      >
+        <template #leading>
+          <button
+            type="button"
+            class="flex items-center justify-center size-5 shrink-0"
+            :class="query.trim().length >= 2
+              ? 'text-primary-500 dark:text-primary-400 cursor-pointer'
+              : 'text-gray-400 pointer-events-none'"
+            :tabindex="query.trim().length >= 2 ? 0 : -1"
+            :aria-label="query.trim().length >= 2 ? 'Open search page' : undefined"
+            @click.stop="goToSearchPage"
+          >
+            <UIcon name="i-heroicons-magnifying-glass" class="size-5" />
+          </button>
+        </template>
+      </UInput>
+    </form>
+
     <div
       v-if="open"
       class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 max-h-100 overflow-y-auto"
