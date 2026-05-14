@@ -13,12 +13,13 @@ export function useSearch(playlistId?: Ref<string | undefined>) {
 
     loading.value = true
     try {
-      results.value = await $fetch('/api/search', {
+      const data = await $fetch<{ results: any[] }>('/api/search', {
         query: {
           q,
           ...(playlistId?.value ? { playlist: playlistId.value } : {}),
         },
       })
+      results.value = data.results
     }
     catch {
       results.value = []
