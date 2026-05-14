@@ -36,11 +36,21 @@ async function logout() {
     >
       <template #title>YT Player</template>
 
-      <div class="flex-2 flex justify-center px-4">
+      <!-- Search bar: desktop only (mobile gets an icon instead) -->
+      <div class="hidden lg:flex flex-2 justify-center px-4">
         <AppSearchBar class="max-w-2xl w-full" />
       </div>
 
       <template #right>
+        <!-- Mobile: plain search icon → /search -->
+        <NuxtLink
+          to="/search"
+          class="lg:hidden flex items-center justify-center size-9 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          aria-label="Search"
+        >
+          <UIcon name="i-heroicons-magnifying-glass" class="size-5" aria-hidden="true" />
+        </NuxtLink>
+
         <div class="hidden lg:flex items-center gap-1.5">
           <UNavigationMenu :items="items" />
           <UButton variant="ghost" size="sm" @click="logout">
