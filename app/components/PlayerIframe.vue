@@ -1,26 +1,36 @@
 <script setup lang="ts">
+import type { AutoPlayMode } from '~/composables/usePlayerSettings'
+
 const props = defineProps<{
   videoId: string
   title?: string | null
   channelTitle?: string | null
   autoPlay: boolean
-  randomNext: boolean
+  autoPlayMode: AutoPlayMode
 }>()
 
 const emit = defineEmits<{
   previous: []
   next: []
   random: []
+  similar: []
   'update:autoPlay': [value: boolean]
-  'update:randomNext': [value: boolean]
+  'update:autoPlayMode': [value: AutoPlayMode]
 }>()
+
+const modes: { value: AutoPlayMode; label: string }[] = [
+  { value: 'next', label: 'Next' },
+  { value: 'random', label: 'Random' },
+  { value: 'similar', label: 'Similar' },
+]
 
 const playerEl = ref<HTMLElement | null>(null)
 let player: any = null
 
 function onEnded() {
   if (!props.autoPlay) return
-  if (props.randomNext) emit('random')
+  if (props.autoPlayMode === 'random') emit('random')
+  else if (props.autoPlayMode === 'similar') emit('similar')
   else emit('next')
 }
 
@@ -74,13 +84,15 @@ watch(() => props.videoId, (id) => {
     </div>
 
     <div class="flex items-center gap-2 flex-wrap">
+      <!-- Manual controls -->
       <UButton variant="ghost" icon="i-heroicons-backward" aria-label="Previous video" @click="$emit('previous')" />
       <UButton variant="ghost" icon="i-heroicons-arrow-path" aria-label="Random video" @click="$emit('random')">
         Random
       </UButton>
       <UButton variant="ghost" icon="i-heroicons-forward" aria-label="Next video" @click="$emit('next')" />
 
-      <div class="ml-auto flex items-center gap-4">
+      <!-- Auto-play controls -->
+      <div class="ml-auto flex items-center gap-3 flex-wrap justify-end">
         <label class="flex items-center gap-2 text-sm cursor-pointer select-none">
           <USwitch
             :model-value="autoPlay"
@@ -88,20 +100,37 @@ watch(() => props.videoId, (id) => {
           />
           <span>Auto-play</span>
         </label>
-        <!-- aria-disabled signals the inactive-component state to AT;
-             WCAG 1.4.3 exempts inactive UI components from contrast requirements. -->
-        <label
-          class="flex items-center gap-2 text-sm cursor-pointer select-none"
-          :class="{ 'opacity-40 pointer-events-none': !autoPlay }"
-          :aria-disabled="!autoPlay ? 'true' : undefined"
+
+        <!-- 3-way mode selector — only visible when auto-play is on -->
+        <Transition
+          enter-active-class="transition-all duration-150 ease-out"
+          enter-from-class="opacity-0 scale-95"
+          enter-to-class="opacity-100 scale-100"
+          leave-active-class="transition-all duration-100 ease-in"
+          leave-from-class="opacity-100 scale-100"
+          leave-to-class="opacity-0 scale-95"
         >
-          <USwitch
-            :model-value="randomNext"
-            :disabled="!autoPlay"
-            @update:model-value="$emit('update:randomNext', $event)"
-          />
-          <span>Random next</span>
-        </label>
+          <div
+            v-if="autoPlay"
+            class="flex gap-1"
+            role="group"
+            aria-label="Auto-play mode"
+          >
+            <button
+              v-for="m in modes"
+              :key="m.value"
+              type="button"
+              class="px-2.5 py-1 text-xs rounded-full border transition-colors"
+              :class="autoPlayMode === m.value
+                ? 'bg-primary-500 dark:bg-primary-400 text-white dark:text-gray-900 border-primary-500 dark:border-primary-400'
+                : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-primary-400'"
+              :aria-pressed="autoPlayMode === m.value"
+              @click="$emit('update:autoPlayMode', m.value)"
+            >
+              {{ m.label }}
+            </button>
+          </div>
+        </Transition>
       </div>
     </div>
   </div>

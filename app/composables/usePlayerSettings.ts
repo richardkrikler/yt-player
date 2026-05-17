@@ -1,6 +1,9 @@
+export type AutoPlayMode = 'next' | 'random' | 'similar'
+
 export function usePlayerSettings(userId: Ref<number | undefined>, playlistId: Ref<string>) {
   const autoPlay = ref(false)
-  const randomNext = ref(false)
+  const autoPlayMode = ref<AutoPlayMode>('next')
+  const similarCrossPlaylist = ref(true)
 
   function key() {
     return `player-settings:${userId.value}:${playlistId.value}`
@@ -13,10 +16,13 @@ export function usePlayerSettings(userId: Ref<number | undefined>, playlistId: R
       if (raw) {
         const s = JSON.parse(raw)
         autoPlay.value = s.autoPlay ?? false
-        randomNext.value = s.randomNext ?? false
+        // backward-compat: migrate legacy randomNext boolean
+        autoPlayMode.value = s.autoPlayMode ?? (s.randomNext ? 'random' : 'next')
+        similarCrossPlaylist.value = s.similarCrossPlaylist ?? true
       } else {
         autoPlay.value = false
-        randomNext.value = false
+        autoPlayMode.value = 'next'
+        similarCrossPlaylist.value = true
       }
     } catch {}
   }
@@ -24,12 +30,16 @@ export function usePlayerSettings(userId: Ref<number | undefined>, playlistId: R
   function save() {
     if (!import.meta.client || !userId.value || !playlistId.value) return
     try {
-      localStorage.setItem(key(), JSON.stringify({ autoPlay: autoPlay.value, randomNext: randomNext.value }))
+      localStorage.setItem(key(), JSON.stringify({
+        autoPlay: autoPlay.value,
+        autoPlayMode: autoPlayMode.value,
+        similarCrossPlaylist: similarCrossPlaylist.value,
+      }))
     } catch {}
   }
 
   watch([userId, playlistId], load, { immediate: true })
-  watch([autoPlay, randomNext], save)
+  watch([autoPlay, autoPlayMode, similarCrossPlaylist], save)
 
-  return { autoPlay, randomNext }
+  return { autoPlay, autoPlayMode, similarCrossPlaylist }
 }
