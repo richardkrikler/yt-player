@@ -1,13 +1,14 @@
 <script setup lang="ts">
 definePageMeta({ viewTransition: { fromTypes: ['vt-back'] } })
 const route = useRoute()
+const router = useRouter()
 const playlistId = computed(() => route.params.id as string)
 const { query: searchQuery, results: searchResults, loading: searchLoading } = useSearch(playlistId)
 
 const {
   videos, currentVideo, currentPosition,
-  loading, loadingMore, hasPrevPage, hasNextPage,
-  loadVideos, loadNextPage, loadPrevPage, seekToVideo, play, next, previous, random,
+  loading, total,
+  loadVideos, goToPage, seekToVideo, play, next, previous, random,
 } = usePlayer(playlistId)
 
 const { fetchVideos } = usePlaylist()
@@ -28,7 +29,7 @@ const { user } = useUserSession()
 const userId = computed(() => user.value?.id)
 const { autoPlay, autoPlayMode, similarCrossPlaylist } = usePlayerSettings(userId, playlistId)
 
-// ── "More like this" section ─────────────────────────────────────────
+// ── "More like this" ─────────────────────────────────────────────────
 const showSimilar = ref(false)
 const similarVideos = ref<any[]>([])
 const similarLoading = ref(false)
@@ -66,7 +67,6 @@ watch(similarCrossPlaylist, () => {
 })
 
 async function playNextSimilar() {
-  // Fetch fresh similar list for auto-play
   if (!activeVideo.value) return
   try {
     const results = await $fetch<any[]>(`/api/videos/${activeVideo.value.id}/similar`, {
@@ -92,30 +92,17 @@ async function playNextSimilar() {
   }
 }
 
+// ── Layout ───────────────────────────────────────────────────────────
 const { setPlaylistVTNames, clearPlaylistVTNames, backId: playlistBackId } = usePlaylistTransition()
 const h1El = ref<HTMLElement | null>(null)
 const thumbEl = ref<HTMLImageElement | null>(null)
-
 const showShare = ref(false)
-const listContainer = ref<HTMLElement | null>(null)
-const topSentinel = ref<HTMLElement | null>(null)
-const bottomSentinel = ref<HTMLElement | null>(null)
+const listEl = ref<HTMLElement | null>(null)
 
 const activeVideo = computed(() => currentVideo.value?.video ?? currentVideo.value)
 
-// Mobile tab state
-// Mobile tab state
-const mobileTab = ref<'player' | 'queue'>('player')
-
-async function switchToQueue() {
-  mobileTab.value = 'queue'
-  await nextTick()
-  await scrollToActive()
-}
-
-// When the playing video changes: switch to player tab on mobile + reload similar
+// Re-fetch similar when video changes and panel is open
 watch(activeVideo, () => {
-  if (import.meta.client && window.innerWidth < 1024) mobileTab.value = 'player'
   if (showSimilar.value) loadSimilar()
 })
 
@@ -129,64 +116,36 @@ useHead(computed(() => ({
 
 async function scrollToActive() {
   await nextTick()
-  listContainer.value
+  listEl.value
     ?.querySelector('[aria-current="true"]')
     ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
 }
 
-async function handleLoadPrev() {
-  const container = listContainer.value
-  if (!container || !hasPrevPage.value) return
-  const heightBefore = container.scrollHeight
-  await loadPrevPage()
-  await nextTick()
-  container.scrollTop += container.scrollHeight - heightBefore
-}
-
 onBeforeRouteLeave((to) => {
   if (to.path === '/') {
-    // Signal home page which card is the morph target; keep names for old-state capture
     playlistBackId.value = playlistId.value
-  } else {
-    // Going elsewhere: remove names so they slide with the root, not float free
+  }
+  else {
     clearPlaylistVTNames()
   }
 })
 
 onMounted(async () => {
-  // Stamp names synchronously (before first await) so page:finish new-state
-  // capture includes them — this is the forward-transition new-state target.
   setPlaylistVTNames(thumbEl.value, h1El.value)
-
   await loadVideos()
-
   const initialVideoId = (route.params.videoId as string) || (route.query.videoId as string) || undefined
   if (initialVideoId) {
-    await seekToVideo(initialVideoId)
+    const targetPage = await seekToVideo(initialVideoId)
+    // Sync localPage without triggering the watcher (page was already fetched by seekToVideo)
+    pausePageWatch = true
+    localPage.value = targetPage
+    await nextTick()
+    pausePageWatch = false
     await scrollToActive()
   }
-
-  await nextTick()
-  const container = listContainer.value!
-
-  const topObs = new IntersectionObserver(entries => {
-    if (entries[0].isIntersecting) handleLoadPrev()
-  }, { root: container, rootMargin: '150px' })
-
-  const bottomObs = new IntersectionObserver(entries => {
-    if (entries[0].isIntersecting) loadNextPage()
-  }, { root: container, rootMargin: '150px' })
-
-  if (topSentinel.value) topObs.observe(topSentinel.value)
-  if (bottomSentinel.value) bottomObs.observe(bottomSentinel.value)
-
-  onUnmounted(() => { topObs.disconnect(); bottomObs.disconnect() })
 })
 
-const router = useRouter()
-
-// Sync the URL with the playing video. Because the alias maps to the same
-// component, router.replace does not remount — it only updates the route.
+// Sync URL with playing video
 watch(currentVideo, async (video) => {
   const vid = video?.video?.id
   await router.replace(
@@ -200,10 +159,42 @@ watch(currentVideo, async (video) => {
 const displayVideos = computed(() =>
   searchQuery.value.length >= 2 ? searchResults.value : videos.value,
 )
+
+// ── Mobile tabs ──────────────────────────────────────────────────────
+const mobileTab = ref<'player' | 'queue'>('player')
+
+function switchToPlayer() {
+  mobileTab.value = 'player'
+}
+
+async function switchToQueue() {
+  mobileTab.value = 'queue'
+  await nextTick()
+  await scrollToActive()
+}
+
+// Switch to player tab when video changes on mobile
+watch(activeVideo, () => {
+  if (import.meta.client && window.innerWidth < 1024) mobileTab.value = 'player'
+})
+
+// ── Pagination ───────────────────────────────────────────────────────
+// Use a local page ref so v-model:page works correctly with UPagination.
+// Guard prevents the watcher from re-fetching when seekToVideo already
+// loaded the right page and we're just syncing the ref.
+const localPage = ref(1)
+let pausePageWatch = false
+
+watch(localPage, async (p) => {
+  if (pausePageWatch) return
+  await goToPage(p)
+  await nextTick()
+  listEl.value?.scrollTo({ top: 0, behavior: 'smooth' })
+})
 </script>
 
 <template>
-  <div class="flex flex-col lg:h-full">
+  <div class="flex flex-col lg:h-full -mt-6 -mb-6 lg:mt-0 lg:mb-0">
     <!-- Sticky header: playlist info + mobile tabs + mobile search -->
     <div class="sticky top-16 z-10 -mx-4 px-4 bg-gray-50 dark:bg-gray-950 lg:static lg:bg-transparent lg:mx-0 lg:px-0 shrink-0">
       <!-- Playlist info row -->
@@ -243,13 +234,13 @@ const displayVideos = computed(() =>
           :class="mobileTab === tab.id
             ? 'border-primary-500 text-primary-600 dark:text-primary-400'
             : 'border-transparent text-gray-500 dark:text-gray-400'"
-          @click="tab.id === 'queue' ? switchToQueue() : (mobileTab = 'player')"
+          @click="tab.id === 'queue' ? switchToQueue() : switchToPlayer()"
         >
           {{ tab.label }}
         </button>
       </div>
 
-      <!-- Search — mobile: inside sticky header (queue tab only); desktop: rendered separately in the queue column -->
+      <!-- Mobile search (queue tab only) -->
       <div v-show="mobileTab === 'queue'" class="py-3 lg:hidden">
         <UInput
           v-model="searchQuery"
@@ -328,11 +319,7 @@ const displayVideos = computed(() =>
                 <p v-else-if="similarError" class="text-sm text-red-500 py-2">{{ similarError }}</p>
                 <p v-else-if="similarVideos.length === 0" class="text-sm text-gray-400 py-2">No similar videos found.</p>
                 <ul v-else class="flex flex-col gap-1">
-                  <li
-                    v-for="r in similarVideos"
-                    :key="r.video.id"
-                    class="group"
-                  >
+                  <li v-for="r in similarVideos" :key="r.video.id">
                     <button
                       type="button"
                       class="w-full flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
@@ -352,10 +339,7 @@ const displayVideos = computed(() =>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{{ r.video.channelTitle }}</p>
                         <UBadge
                           v-if="r.item?.playlistId && r.item.playlistId !== playlistId"
-                          size="xs"
-                          variant="soft"
-                          color="primary"
-                          class="mt-1"
+                          size="xs" variant="soft" color="primary" class="mt-1"
                         >
                           {{ r.customTitle || r.playlist?.title || 'Other playlist' }}
                         </UBadge>
@@ -367,6 +351,7 @@ const displayVideos = computed(() =>
             </Transition>
           </div>
         </div>
+
         <div v-else class="aspect-video bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center text-gray-400">
           <div class="text-center">
             <template v-if="fetching">
@@ -375,15 +360,11 @@ const displayVideos = computed(() =>
             </template>
             <template v-else-if="videos.length > 0">
               <p class="text-lg">Select a video to play</p>
-              <UButton class="mt-3" icon="i-heroicons-arrow-path" @click="random">
-                Random
-              </UButton>
+              <UButton class="mt-3" icon="i-heroicons-arrow-path" @click="random">Random</UButton>
             </template>
             <template v-else-if="!loading">
               <p class="text-lg">No videos cached yet</p>
-              <UButton class="mt-3" @click="handleFetchVideos">
-                Fetch videos
-              </UButton>
+              <UButton class="mt-3" @click="handleFetchVideos">Fetch videos</UButton>
             </template>
           </div>
         </div>
@@ -394,7 +375,7 @@ const displayVideos = computed(() =>
         class="flex flex-col gap-3 lg:min-h-0"
         :class="{ 'hidden lg:flex': mobileTab !== 'queue' }"
       >
-        <!-- Desktop-only search (mobile search lives in the sticky header above) -->
+        <!-- Desktop search -->
         <UInput
           class="hidden lg:block shrink-0"
           v-model="searchQuery"
@@ -403,21 +384,30 @@ const displayVideos = computed(() =>
           :loading="searchLoading"
         />
 
-        <div v-if="loading" class="text-center py-8 text-gray-400">Loading videos…</div>
+        <div v-if="loading" class="text-center py-8 text-gray-400">Loading…</div>
 
         <div v-else-if="videos.length === 0" class="text-center py-8 text-gray-400">
-          <p>No videos cached yet.</p>
+          No videos cached yet.
         </div>
 
-        <div v-else ref="listContainer" class="overflow-y-auto flex-1 min-h-0 h-[70svh] lg:h-auto">
-          <div ref="topSentinel" class="h-1" />
-          <div v-if="loadingMore" class="text-center py-2 text-xs text-gray-400">Loading…</div>
+        <div v-else ref="listEl" class="overflow-y-auto flex-1 min-h-[50svh] lg:min-h-0">
           <VideoList
             :videos="displayVideos"
             :active-video-id="activeVideo?.id"
             @play="play"
           />
-          <div ref="bottomSentinel" class="h-1" />
+        </div>
+
+        <!-- Pagination: outside the v-else so it stays visible during page fetches -->
+        <div
+          v-if="total > 50 && searchQuery.length < 2"
+          class="sticky bottom-0 shrink-0 flex justify-center py-2 bg-gray-50 dark:bg-gray-950"
+        >
+          <UPagination
+            v-model:page="localPage"
+            :total="total"
+            :items-per-page="50"
+          />
         </div>
       </div>
     </div>

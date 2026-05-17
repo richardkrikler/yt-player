@@ -1,6 +1,6 @@
 import { db } from '../../../../db'
 import { playlistItems, videos, userPlaylists, playlistShares } from '../../../../db/schema'
-import { eq, and, asc } from 'drizzle-orm'
+import { eq, and, asc, count } from 'drizzle-orm'
 import { requireAuth } from '../../../../utils/requireRole'
 
 export default defineEventHandler(async (event) => {
@@ -18,7 +18,12 @@ export default defineEventHandler(async (event) => {
     if (!shared) throw createError({ statusCode: 403, message: 'Access denied' })
   }
 
-  return db
+  const [{ total }] = await db
+    .select({ total: count() })
+    .from(playlistItems)
+    .where(eq(playlistItems.playlistId, playlistId))
+
+  const results = await db
     .select({ item: playlistItems, video: videos })
     .from(playlistItems)
     .innerJoin(videos, eq(playlistItems.videoId, videos.id))
@@ -26,4 +31,6 @@ export default defineEventHandler(async (event) => {
     .orderBy(asc(playlistItems.position))
     .limit(Number(limit))
     .offset(offset)
+
+  return { total, results }
 })
