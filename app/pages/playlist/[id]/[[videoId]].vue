@@ -103,8 +103,19 @@ const bottomSentinel = ref<HTMLElement | null>(null)
 
 const activeVideo = computed(() => currentVideo.value?.video ?? currentVideo.value)
 
-// Re-fetch similar when video changes and panel is open
+// Mobile tab state
+// Mobile tab state
+const mobileTab = ref<'player' | 'queue'>('player')
+
+async function switchToQueue() {
+  mobileTab.value = 'queue'
+  await nextTick()
+  await scrollToActive()
+}
+
+// When the playing video changes: switch to player tab on mobile + reload similar
 watch(activeVideo, () => {
+  if (import.meta.client && window.innerWidth < 1024) mobileTab.value = 'player'
   if (showSimilar.value) loadSimilar()
 })
 
@@ -192,36 +203,66 @@ const displayVideos = computed(() =>
 </script>
 
 <template>
-  <div class="h-full flex flex-col">
-    <div class="flex items-center gap-3 mb-4 flex-wrap shrink-0">
-      <NuxtLink to="/" class="text-sm text-gray-500 dark:text-gray-400">
-        ← Back
-      </NuxtLink>
-      <img
-        v-if="playlist?.thumbnailUrl"
-        ref="thumbEl"
-        :src="playlist.thumbnailUrl"
-        :alt="playlist?.customTitle || playlist?.title"
-        class="w-14 rounded object-cover shrink-0"
-        style="aspect-ratio: 16/9"
-      >
-      <div class="min-w-0">
-        <h1 ref="h1El" class="font-bold text-lg truncate">{{ playlist?.customTitle || playlist?.title }}</h1>
-        <p v-if="playlist?.customTitle" class="text-xs text-gray-400 truncate -mt-0.5">{{ playlist?.title }}</p>
+  <div class="flex flex-col lg:h-full">
+    <!-- Sticky header: playlist info + mobile tabs + mobile search -->
+    <div class="sticky top-16 z-10 -mx-4 px-4 bg-gray-50 dark:bg-gray-950 lg:static lg:bg-transparent lg:mx-0 lg:px-0 shrink-0">
+      <!-- Playlist info row -->
+      <div class="flex items-center gap-3 py-3 flex-wrap">
+        <NuxtLink to="/" class="text-sm text-gray-500 dark:text-gray-400">
+          ← Back
+        </NuxtLink>
+        <img
+          v-if="playlist?.thumbnailUrl"
+          ref="thumbEl"
+          :src="playlist.thumbnailUrl"
+          :alt="playlist?.customTitle || playlist?.title"
+          class="w-14 rounded object-cover shrink-0"
+          style="aspect-ratio: 16/9"
+        >
+        <div class="min-w-0">
+          <h1 ref="h1El" class="font-bold text-lg truncate">{{ playlist?.customTitle || playlist?.title }}</h1>
+          <p v-if="playlist?.customTitle" class="text-xs text-gray-400 truncate -mt-0.5">{{ playlist?.title }}</p>
+        </div>
+        <UBadge v-if="playlist?.privacyStatus === 'private'" color="orange" variant="soft" size="xs">
+          Private
+        </UBadge>
+        <div class="ml-auto flex gap-2">
+          <UButton size="sm" variant="ghost" icon="i-heroicons-share" @click="showShare = true">
+            Share
+          </UButton>
+        </div>
       </div>
-      <UBadge v-if="playlist?.privacyStatus === 'private'" color="orange" variant="soft" size="xs">
-        Private
-      </UBadge>
-      <div class="ml-auto flex gap-2">
-        <UButton size="sm" variant="ghost" icon="i-heroicons-share" @click="showShare = true">
-          Share
-        </UButton>
+
+      <!-- Mobile tab bar -->
+      <div class="flex lg:hidden border-t border-b border-gray-200 dark:border-gray-700">
+        <button
+          v-for="tab in [{ id: 'player', label: 'Player' }, { id: 'queue', label: 'Queue' }]"
+          :key="tab.id"
+          type="button"
+          class="flex-1 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors"
+          :class="mobileTab === tab.id
+            ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+            : 'border-transparent text-gray-500 dark:text-gray-400'"
+          @click="tab.id === 'queue' ? switchToQueue() : (mobileTab = 'player')"
+        >
+          {{ tab.label }}
+        </button>
+      </div>
+
+      <!-- Search — mobile: inside sticky header (queue tab only); desktop: rendered separately in the queue column -->
+      <div v-show="mobileTab === 'queue'" class="py-3 lg:hidden">
+        <UInput
+          v-model="searchQuery"
+          placeholder="Search in playlist…"
+          icon="i-heroicons-magnifying-glass"
+          :loading="searchLoading"
+        />
       </div>
     </div>
 
-    <div class="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
-      <!-- Player -->
-      <div>
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 lg:flex-1 lg:min-h-0 mt-4 lg:mt-0">
+      <!-- Player column -->
+      <div :class="{ 'hidden lg:block': mobileTab !== 'player' }">
         <div v-if="activeVideo">
           <PlayerIframe
             :video-id="activeVideo.id"
@@ -348,9 +389,14 @@ const displayVideos = computed(() =>
         </div>
       </div>
 
-      <!-- Video list -->
-      <div class="flex flex-col gap-3 min-h-0">
+      <!-- Queue column -->
+      <div
+        class="flex flex-col gap-3 lg:min-h-0"
+        :class="{ 'hidden lg:flex': mobileTab !== 'queue' }"
+      >
+        <!-- Desktop-only search (mobile search lives in the sticky header above) -->
         <UInput
+          class="hidden lg:block shrink-0"
           v-model="searchQuery"
           placeholder="Search in playlist…"
           icon="i-heroicons-magnifying-glass"
@@ -363,7 +409,7 @@ const displayVideos = computed(() =>
           <p>No videos cached yet.</p>
         </div>
 
-        <div v-else ref="listContainer" class="overflow-y-auto flex-1 min-h-0">
+        <div v-else ref="listContainer" class="overflow-y-auto flex-1 min-h-0 h-[70svh] lg:h-auto">
           <div ref="topSentinel" class="h-1" />
           <div v-if="loadingMore" class="text-center py-2 text-xs text-gray-400">Loading…</div>
           <VideoList

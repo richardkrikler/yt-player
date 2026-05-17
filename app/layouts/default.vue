@@ -29,7 +29,7 @@ async function logout() {
 </script>
 
 <template>
-  <div class="h-screen overflow-hidden flex flex-col bg-gray-50 dark:bg-gray-950">
+  <div class="flex flex-col min-h-screen lg:h-screen lg:overflow-hidden bg-gray-50 dark:bg-gray-950">
     <UHeader
       style="view-transition-name: site-header"
       :ui="{ title: 'shrink-0 font-bold text-lg text-primary-600 dark:text-primary-400' }"
@@ -74,7 +74,7 @@ async function logout() {
       </template>
     </UHeader>
 
-    <main class="flex-1 min-h-0 overflow-y-auto max-w-7xl w-full mx-auto px-4 py-6">
+    <main class="flex-1 lg:min-h-0 lg:overflow-y-auto max-w-7xl w-full mx-auto px-4 py-6">
       <slot />
     </main>
   </div>
