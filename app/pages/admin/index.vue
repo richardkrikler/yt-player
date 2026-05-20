@@ -19,8 +19,27 @@ async function deleteUser(id: number, email: string) {
   await refreshUsers()
 }
 
+const rowState = ref<Map<string, 'idle' | 'loading' | 'done'>>(new Map())
+
+function getRowState(id: string) {
+  return rowState.value.get(id) ?? 'idle'
+}
+
 async function refreshPlaylist(id: string) {
-  await $fetch(`/api/admin/playlists/${id}/refresh`, { method: 'POST' })
+  if (getRowState(id) === 'loading') return
+  rowState.value = new Map(rowState.value).set(id, 'loading')
+  try {
+    const updated: any = await $fetch(`/api/admin/playlists/${id}/refresh`, { method: 'POST' })
+    const row = (playlists.value as any[])?.find((r: any) => r.playlist.id === id)
+    if (row) row.playlist = { ...row.playlist, ...updated }
+    rowState.value = new Map(rowState.value).set(id, 'done')
+    setTimeout(() => {
+      rowState.value = new Map(rowState.value).set(id, 'idle')
+    }, 1500)
+  }
+  catch {
+    rowState.value = new Map(rowState.value).set(id, 'idle')
+  }
 }
 </script>
 
@@ -123,8 +142,26 @@ async function refreshPlaylist(id: string) {
                 </UBadge>
               </td>
               <td class="py-2">
-                <UButton size="xs" variant="ghost" icon="i-heroicons-arrow-path" @click="refreshPlaylist(row.playlist.id)">
+                <UButton
+                  v-if="row.playlist.videosCachedAt"
+                  size="xs" variant="ghost"
+                  :disabled="getRowState(row.playlist.id) === 'loading'"
+                  @click="refreshPlaylist(row.playlist.id)"
+                >
+                  <UIcon
+                    :name="getRowState(row.playlist.id) === 'done' ? 'i-heroicons-check' : 'i-heroicons-arrow-path'"
+                    :class="{ 'animate-spin': getRowState(row.playlist.id) === 'loading' }"
+                  />
                   Refresh
+                </UButton>
+                <UButton
+                  v-else
+                  size="xs" variant="ghost" icon="i-heroicons-arrow-down-tray"
+                  :loading="getRowState(row.playlist.id) === 'loading'"
+                  :disabled="getRowState(row.playlist.id) === 'loading'"
+                  @click="refreshPlaylist(row.playlist.id)"
+                >
+                  Fetch
                 </UButton>
               </td>
             </tr>

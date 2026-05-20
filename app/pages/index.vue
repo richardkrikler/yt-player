@@ -249,7 +249,7 @@ async function addFromUrl() {
           :playlist="pl"
           :fetching="fetchingIds.has(pl.id)"
           :reordering="reordering"
-          @refresh="refreshMetadata(pl.id)"
+          @refresh="(done) => handleFetchVideos(pl.id).then(() => done(true)).catch(() => done(false))"
           @fetch-videos="handleFetchVideos(pl.id)"
           @remove="handleRemove(pl)"
           @rename="renamePlaylist(pl.id, $event)"

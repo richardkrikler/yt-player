@@ -16,11 +16,22 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  refresh: []
+  refresh: [done: (success: boolean) => void]
   remove: []
   fetchVideos: []
   rename: [title: string]
 }>()
+
+const refreshState = ref<'idle' | 'loading' | 'done' | 'error'>('idle')
+
+function handleRefresh() {
+  if (refreshState.value === 'loading') return
+  refreshState.value = 'loading'
+  emit('refresh', (success) => {
+    refreshState.value = success ? 'done' : 'idle'
+    if (success) setTimeout(() => { refreshState.value = 'idle' }, 1500)
+  })
+}
 
 const editing = ref(false)
 const draft = ref('')
@@ -141,11 +152,20 @@ function activateTransition() {
 
       <!-- Normal actions -->
       <div v-if="!reordering" class="flex gap-2 mt-3">
-        <UButton size="xs" variant="ghost" icon="i-heroicons-arrow-path" @click="$emit('refresh')">
+        <UButton
+          v-if="playlist.videosCachedAt"
+          size="xs" variant="ghost"
+          :disabled="refreshState === 'loading'"
+          @click="handleRefresh"
+        >
+          <UIcon
+            :name="refreshState === 'done' ? 'i-heroicons-check' : 'i-heroicons-arrow-path'"
+            :class="{ 'animate-spin': refreshState === 'loading' }"
+          />
           Refresh
         </UButton>
         <UButton
-          v-if="!playlist.videosCachedAt || fetching"
+          v-else
           size="xs" variant="ghost" icon="i-heroicons-arrow-down-tray"
           :loading="fetching"
           :disabled="fetching"

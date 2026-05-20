@@ -38,7 +38,7 @@ export function usePlaylist() {
     try {
       const updated = await $fetch(`/api/playlists/${id}/refresh`, { method: 'POST' })
       const idx = playlists.value.findIndex(p => p.id === id)
-      if (idx !== -1) playlists.value[idx] = updated
+      if (idx !== -1) playlists.value[idx] = { ...playlists.value[idx], ...updated }
       return updated
     }
     catch (e: any) {
