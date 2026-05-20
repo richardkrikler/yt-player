@@ -34,10 +34,19 @@ export async function getYoutubeClientForUser(userId: number) {
     throw createError({ statusCode: 401, message: 'YouTube account not connected' })
   }
 
+  let accessToken: string, refreshToken: string
+  try {
+    accessToken = decrypt(user.accessToken)
+    refreshToken = decrypt(user.refreshToken)
+  }
+  catch {
+    throw createError({ statusCode: 401, message: 'invalid_grant' })
+  }
+
   const client = createOAuthClient()
   client.setCredentials({
-    access_token: decrypt(user.accessToken),
-    refresh_token: decrypt(user.refreshToken),
+    access_token: accessToken,
+    refresh_token: refreshToken,
     expiry_date: user.tokenExpiresAt ?? undefined,
   })
 
@@ -52,6 +61,16 @@ export async function getYoutubeClientForUser(userId: number) {
 }
 
 /** Find any user who has this playlist and has YouTube connected, and return their client. */
+export async function clearYoutubeTokens(userId: number) {
+  await db.update(users).set({
+    accessToken: null,
+    refreshToken: null,
+    tokenExpiresAt: null,
+    youtubeConnectedAt: null,
+    googleId: null,
+  }).where(eq(users.id, userId))
+}
+
 export async function getYoutubeClientForPlaylist(playlistId: string) {
   const row = await db
     .select({ userId: userPlaylists.userId })
@@ -65,9 +84,17 @@ export async function getYoutubeClientForPlaylist(playlistId: string) {
     .get()
 
   if (!row) {
-    throw createError({ statusCode: 400, message: 'No connected YouTube account available for this playlist' })
+    throw createError({ statusCode: 401, message: 'YouTube authorization expired. Please reconnect.' })
   }
-  return getYoutubeClientForUser(row.userId)
+  try {
+    return await getYoutubeClientForUser(row.userId)
+  }
+  catch (e: any) {
+    if (e?.message === 'invalid_grant') {
+      await clearYoutubeTokens(row.userId)
+    }
+    throw e
+  }
 }
 
 export function getPublicYoutubeClient() {

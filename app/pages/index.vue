@@ -4,7 +4,7 @@ import type Sortable from 'sortablejs'
 definePageMeta({ viewTransition: { fromTypes: ['vt-forward'] } })
 useHead({ title: 'My Playlists' })
 const { user } = useUserSession()
-const { playlists, loading, error, fetchPlaylists, importFromUrl, removePlaylist, refreshMetadata, fetchVideos, renamePlaylist } = usePlaylist()
+const { playlists, loading, error, youtubeAuthExpired, fetchPlaylists, importFromUrl, removePlaylist, refreshMetadata, fetchVideos, renamePlaylist } = usePlaylist()
 
 async function handleRemove(pl: any) {
   const label = pl.customTitle || pl.title
@@ -65,6 +65,8 @@ const ytLoading = ref(false)
 const selected = ref<Set<string>>(new Set())
 const importing = ref(false)
 
+const ytError = ref('')
+
 // public URL import
 const urlInput = ref('')
 const urlError = ref('')
@@ -75,12 +77,20 @@ onMounted(fetchPlaylists)
 async function loadYTPlaylists() {
   showYTImport.value = true
   ytLoading.value = true
+  ytError.value = ''
   try {
     const data = await $fetch('/api/playlists/mine/youtube')
     ytPlaylists.value = data.slice().sort((a: any, b: any) => a.title.localeCompare(b.title))
   }
   catch (e: any) {
     ytPlaylists.value = []
+    if (e?.status === 401) {
+      showYTImport.value = false
+      youtubeAuthExpired.value = true
+    }
+    else {
+      ytError.value = e?.data?.message ?? 'Failed to load playlists'
+    }
   }
   finally {
     ytLoading.value = false
@@ -154,6 +164,17 @@ async function addFromUrl() {
       </div>
     </div>
 
+    <UAlert
+      v-if="youtubeAuthExpired"
+      title="YouTube authorization expired"
+      description="Your YouTube connection has expired. Reconnect to resume importing and refreshing private playlists."
+      color="error"
+      variant="outline"
+      orientation="horizontal"
+      class="mb-6"
+      :actions="[{ label: 'Reconnect YouTube', to: '/settings', icon: 'i-simple-icons-youtube' }]"
+    />
+
     <!-- Public playlist URL import -->
     <form class="flex gap-2 mb-6" @submit.prevent="addFromUrl">
       <UInput
@@ -178,6 +199,7 @@ async function addFromUrl() {
         </div>
       </div>
       <div v-if="ytLoading" class="py-8 text-center text-gray-400">Loading…</div>
+      <p v-else-if="ytError" role="alert" class="text-sm text-red-500 py-4 text-center">{{ ytError }}</p>
       <ul v-else class="flex flex-col gap-1 max-h-72 overflow-y-auto">
         <li
           v-for="pl in ytPlaylists"

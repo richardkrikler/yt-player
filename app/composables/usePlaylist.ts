@@ -4,6 +4,8 @@ export function usePlaylist() {
   const playlists = useState<any[]>('playlists', () => [])
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const youtubeAuthExpired = useState('youtubeAuthExpired', () => false)
+  const { fetch: refreshSession } = useUserSession()
 
   async function fetchPlaylists() {
     loading.value = true
@@ -33,14 +35,32 @@ export function usePlaylist() {
   }
 
   async function refreshMetadata(id: string) {
-    const updated = await $fetch(`/api/playlists/${id}/refresh`, { method: 'POST' })
-    const idx = playlists.value.findIndex(p => p.id === id)
-    if (idx !== -1) playlists.value[idx] = updated
-    return updated
+    try {
+      const updated = await $fetch(`/api/playlists/${id}/refresh`, { method: 'POST' })
+      const idx = playlists.value.findIndex(p => p.id === id)
+      if (idx !== -1) playlists.value[idx] = updated
+      return updated
+    }
+    catch (e: any) {
+      if (e?.status === 401) {
+        youtubeAuthExpired.value = true
+        await refreshSession()
+      }
+      throw e
+    }
   }
 
   async function fetchVideos(id: string) {
-    return $fetch(`/api/playlists/${id}/fetch-videos`, { method: 'POST' })
+    try {
+      return await $fetch(`/api/playlists/${id}/fetch-videos`, { method: 'POST' })
+    }
+    catch (e: any) {
+      if (e?.status === 401) {
+        youtubeAuthExpired.value = true
+        await refreshSession()
+      }
+      throw e
+    }
   }
 
   async function renamePlaylist(id: string, title: string) {
@@ -56,6 +76,7 @@ export function usePlaylist() {
     playlists,
     loading,
     error,
+    youtubeAuthExpired,
     fetchPlaylists,
     importFromYouTube,
     importFromUrl,

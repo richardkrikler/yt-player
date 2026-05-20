@@ -58,13 +58,14 @@ async function disconnect() {
         </UButton>
       </div>
 
-      <div v-else class="flex items-center justify-between">
+      <div v-else class="flex items-center justify-between gap-4">
         <p class="text-sm text-gray-500">
           Connect your YouTube account to import private playlists.
         </p>
         <UButton
           size="sm"
           icon="i-simple-icons-youtube"
+          class="shrink-0"
           @click="() => navigateTo('/api/youtube/connect', { external: true })"
         >
           Connect

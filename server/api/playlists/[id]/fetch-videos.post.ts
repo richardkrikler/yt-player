@@ -1,6 +1,6 @@
 import { db } from '../../../db'
 import { playlists, playlistItems, videos, userPlaylists, playlistShares } from '../../../db/schema'
-import { getYoutubeClientForPlaylist, getPublicYoutubeClient } from '../../../utils/youtube'
+import { getYoutubeClientForPlaylist, getPublicYoutubeClient, clearYoutubeTokens } from '../../../utils/youtube'
 import { requireAuth } from '../../../utils/requireRole'
 import { eq, and } from 'drizzle-orm'
 
@@ -20,6 +20,7 @@ export default defineEventHandler(async (event) => {
     if (!shared) throw createError({ statusCode: 403, message: 'Access denied' })
   }
 
+  try {
   const youtube = playlist.privacyStatus === 'public'
     ? getPublicYoutubeClient()
     : await getYoutubeClientForPlaylist(playlistId)
@@ -107,4 +108,15 @@ export default defineEventHandler(async (event) => {
     .where(eq(playlists.id, playlistId))
 
   return { count: allItems.length }
+  }
+  catch (e: any) {
+    if (e?.message === 'invalid_grant' || e?.statusCode === 401) {
+      if (user.youtubeConnected) {
+        await clearYoutubeTokens(user.id)
+        await setUserSession(event, { user: { ...user, youtubeConnected: false } })
+      }
+      throw createError({ statusCode: 401, message: 'YouTube authorization expired. Please reconnect.' })
+    }
+    throw e
+  }
 })

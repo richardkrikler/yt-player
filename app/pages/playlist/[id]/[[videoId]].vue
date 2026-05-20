@@ -11,7 +11,7 @@ const {
   loadVideos, goToPage, seekToVideo, play, next, previous, random,
 } = usePlayer(playlistId)
 
-const { fetchVideos } = usePlaylist()
+const { fetchVideos, youtubeAuthExpired } = usePlaylist()
 const fetching = ref(false)
 
 async function handleFetchVideos() {
@@ -19,6 +19,9 @@ async function handleFetchVideos() {
   try {
     await fetchVideos(playlistId.value)
     await loadVideos()
+  }
+  catch {
+    // youtubeAuthExpired is set by the composable; other errors are silent
   }
   finally {
     fetching.value = false
@@ -250,6 +253,17 @@ watch(localPage, async (p) => {
         />
       </div>
     </div>
+
+    <UAlert
+      v-if="youtubeAuthExpired"
+      title="YouTube authorization expired"
+      description="Your YouTube connection has expired. Reconnect to resume refreshing this playlist."
+      color="error"
+      variant="outline"
+      orientation="horizontal"
+      class="mb-4"
+      :actions="[{ label: 'Reconnect YouTube', to: '/settings', icon: 'i-simple-icons-youtube' }]"
+    />
 
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 lg:flex-1 lg:min-h-0 mt-4 lg:mt-0">
       <!-- Player column -->

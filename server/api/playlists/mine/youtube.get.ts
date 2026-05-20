@@ -1,4 +1,4 @@
-import { getYoutubeClientForUser } from '../../../utils/youtube'
+import { getYoutubeClientForUser, clearYoutubeTokens } from '../../../utils/youtube'
 import { requireAuth } from '../../../utils/requireRole'
 
 export default defineEventHandler(async (event) => {
@@ -8,20 +8,30 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, message: 'YouTube account not connected' })
   }
 
-  const youtube = await getYoutubeClientForUser(user.id)
   const items: any[] = []
   let pageToken: string | undefined
 
-  do {
-    const res = await youtube.playlists.list({
-      part: ['snippet', 'contentDetails', 'status'],
-      mine: true,
-      maxResults: 50,
-      pageToken,
-    })
-    items.push(...(res.data.items ?? []))
-    pageToken = res.data.nextPageToken ?? undefined
-  } while (pageToken)
+  try {
+    const youtube = await getYoutubeClientForUser(user.id)
+    do {
+      const res = await youtube.playlists.list({
+        part: ['snippet', 'contentDetails', 'status'],
+        mine: true,
+        maxResults: 50,
+        pageToken,
+      })
+      items.push(...(res.data.items ?? []))
+      pageToken = res.data.nextPageToken ?? undefined
+    } while (pageToken)
+  }
+  catch (e: any) {
+    if (e?.message === 'invalid_grant') {
+      await clearYoutubeTokens(user.id)
+      await setUserSession(event, { user: { ...user, youtubeConnected: false } })
+      throw createError({ statusCode: 401, message: 'YouTube authorization expired. Please reconnect.' })
+    }
+    throw e
+  }
 
   return items.map(item => ({
     id: item.id,
