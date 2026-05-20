@@ -1,5 +1,9 @@
 export type AutoPlayMode = 'next' | 'random' | 'similar'
 
+const HISTORY_MAX = 5
+
+export interface PlayHistoryEntry { id: string, playedAt: number }
+
 export function usePlayerSettings(userId: Ref<number | undefined>, playlistId: Ref<string>) {
   const autoPlay = ref(false)
   const autoPlayMode = ref<AutoPlayMode>('next')
@@ -38,8 +42,32 @@ export function usePlayerSettings(userId: Ref<number | undefined>, playlistId: R
     } catch {}
   }
 
+  function historyKey() {
+    return `player-history:${userId.value}`
+  }
+
+  function getHistory(): PlayHistoryEntry[] {
+    if (!import.meta.client || !userId.value) return []
+    try {
+      const raw = localStorage.getItem(historyKey())
+      return raw ? JSON.parse(raw) : []
+    }
+    catch { return [] }
+  }
+
+  function pushHistory(id: string) {
+    if (!import.meta.client || !userId.value) return
+    try {
+      const history = getHistory().filter(h => h.id !== id)
+      history.push({ id, playedAt: Date.now() })
+      if (history.length > HISTORY_MAX) history.splice(0, history.length - HISTORY_MAX)
+      localStorage.setItem(historyKey(), JSON.stringify(history))
+    }
+    catch {}
+  }
+
   watch([userId, playlistId], load, { immediate: true })
   watch([autoPlay, autoPlayMode, similarCrossPlaylist], save)
 
-  return { autoPlay, autoPlayMode, similarCrossPlaylist }
+  return { autoPlay, autoPlayMode, similarCrossPlaylist, getHistory, pushHistory }
 }

@@ -30,7 +30,7 @@ async function handleFetchVideos() {
 
 const { user } = useUserSession()
 const userId = computed(() => user.value?.id)
-const { autoPlay, autoPlayMode, similarCrossPlaylist } = usePlayerSettings(userId, playlistId)
+const { autoPlay, autoPlayMode, similarCrossPlaylist, getHistory, pushHistory } = usePlayerSettings(userId, playlistId)
 
 // ── "More like this" ─────────────────────────────────────────────────
 const showSimilar = ref(false)
@@ -80,7 +80,24 @@ async function playNextSimilar() {
       },
     })
     if (results.length === 0) { next(); return }
-    const pick = results[Math.floor(Math.random() * results.length)]
+
+    const history = getHistory()
+    const historyIds = new Set(history.map(h => h.id))
+    const fresh = results.filter(r => !historyIds.has(r.video?.id ?? r.item?.videoId))
+
+    let pick: any
+    if (fresh.length > 0) {
+      pick = fresh[Math.floor(Math.random() * fresh.length)]
+    }
+    else {
+      // All suggestions recently played — pick the least recently played
+      pick = results.reduce((oldest, r) => {
+        const tR = history.find(h => h.id === (r.video?.id ?? r.item?.videoId))?.playedAt ?? 0
+        const tO = history.find(h => h.id === (oldest.video?.id ?? oldest.item?.videoId))?.playedAt ?? 0
+        return tR < tO ? r : oldest
+      })
+    }
+
     const videoId = pick.video?.id ?? pick.item?.videoId
     const pid = pick.item?.playlistId ?? playlistId.value
     if (pid !== playlistId.value) {
@@ -104,8 +121,9 @@ const listEl = ref<HTMLElement | null>(null)
 
 const activeVideo = computed(() => currentVideo.value?.video ?? currentVideo.value)
 
-// Re-fetch similar when video changes and panel is open
-watch(activeVideo, () => {
+// Record history + re-fetch similar when video changes
+watch(activeVideo, (newVideo, oldVideo) => {
+  if (oldVideo?.id) pushHistory(oldVideo.id)
   if (showSimilar.value) loadSimilar()
 })
 
