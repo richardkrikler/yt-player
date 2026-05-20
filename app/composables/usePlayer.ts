@@ -46,7 +46,17 @@ export function usePlayer(playlistId: Ref<string>) {
       })
       play(result)
     }
-    catch { /* end of playlist */ }
+    catch {
+      if (direction === 'next') {
+        try {
+          const first = await $fetch<any>(`/api/playlists/${playlistId.value}/videos/adjacent`, {
+            query: { position: -1, direction: 'next' },
+          })
+          play(first)
+        }
+        catch {}
+      }
+    }
   }
 
   // Returns the page the video lives on (so the caller can sync its own page ref)
