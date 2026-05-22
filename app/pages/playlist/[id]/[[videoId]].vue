@@ -164,16 +164,48 @@ onMounted(async () => {
     pausePageWatch = false
     await scrollToActive()
   }
+  // From here on, video changes push new entries into browser history
+  initialMounted = true
 })
 
-// Sync URL with playing video
+// ── Browser history sync ─────────────────────────────────────────────
+// routeChangeFromPlayer: WE pushed the route → ignore the resulting
+//   route.params watcher tick so we don't double-seek.
+// suppressHistoryPush: route changed from OUTSIDE (back/forward) →
+//   skip the push in the currentVideo watcher.
+let routeChangeFromPlayer = false
+let suppressHistoryPush = false
+let initialMounted = false
+
+// Sync playing video → URL (push after first mount, replace during init)
 watch(currentVideo, async (video) => {
   const vid = video?.video?.id
-  await router.replace(
+  if (suppressHistoryPush) {
+    suppressHistoryPush = false
+    await scrollToActive()
+    return
+  }
+  routeChangeFromPlayer = true
+  const navigate = initialMounted ? router.push.bind(router) : router.replace.bind(router)
+  await navigate(
     vid
       ? { path: `/playlist/${playlistId.value}/${vid}` }
       : { path: `/playlist/${playlistId.value}` },
   )
+  await scrollToActive()
+})
+
+// Sync URL → seek (browser back / forward / direct link after mount)
+watch(() => route.params.videoId as string | undefined, async (newVideoId) => {
+  if (routeChangeFromPlayer) { routeChangeFromPlayer = false; return }
+  if (!initialMounted) return
+  if (!newVideoId || newVideoId === activeVideo.value?.id) return
+  suppressHistoryPush = true
+  const targetPage = await seekToVideo(newVideoId)
+  pausePageWatch = true
+  localPage.value = targetPage
+  await nextTick()
+  pausePageWatch = false
   await scrollToActive()
 })
 
