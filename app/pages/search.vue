@@ -271,7 +271,6 @@ function onChannelFocusOut() {
             <div
               v-if="channelDropdownOpen && channelResults.length > 0"
               class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 overflow-hidden"
-              role="listbox"
               aria-label="Matching channels"
             >
               <button
@@ -279,7 +278,6 @@ function onChannelFocusOut() {
                 :key="name"
                 type="button"
                 class="w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                role="option"
                 @click="pickChannel(name)"
               >
                 <UIcon name="i-heroicons-tv" class="size-4 text-gray-400 shrink-0" aria-hidden="true" />

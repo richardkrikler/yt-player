@@ -131,7 +131,6 @@ watch(() => props.open, (v) => {
           <div
             v-if="dropdownOpen && searchResults.length > 0"
             class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 overflow-hidden"
-            role="listbox"
             aria-label="Matching users"
           >
             <button
@@ -139,8 +138,7 @@ watch(() => props.open, (v) => {
               :key="u.id"
               type="button"
               class="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              role="option"
-              :aria-selected="selected?.id === u.id"
+              :aria-pressed="selected?.id === u.id"
               @click="pick(u)"
             >
               <UIcon name="i-heroicons-user-circle" class="size-5 text-gray-400 shrink-0" aria-hidden="true" />

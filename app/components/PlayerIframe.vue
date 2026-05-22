@@ -79,7 +79,7 @@ watch(() => props.videoId, (id) => {
     <div class="flex items-start justify-between gap-4">
       <div class="min-w-0">
         <h2 v-if="title" class="font-semibold text-base leading-snug line-clamp-2">{{ title }}</h2>
-        <p v-if="channelTitle" class="text-sm text-gray-500 mt-0.5">{{ channelTitle }}</p>
+        <p v-if="channelTitle" class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ channelTitle }}</p>
       </div>
     </div>
 

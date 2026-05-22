@@ -58,6 +58,7 @@ watch(route, clear)
               : 'text-gray-400 pointer-events-none'"
             :tabindex="query.trim().length >= 2 ? 0 : -1"
             :aria-label="query.trim().length >= 2 ? 'Open search page' : undefined"
+            :aria-hidden="query.trim().length >= 2 ? undefined : 'true'"
             @click.stop="goToSearchPage"
           >
             <UIcon name="i-heroicons-magnifying-glass" class="size-5" />
@@ -69,10 +70,9 @@ watch(route, clear)
     <div
       v-if="open"
       class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 max-h-100 overflow-y-auto"
-      role="listbox"
       aria-label="Search results"
     >
-      <div v-if="results.length === 0 && !loading" class="px-4 py-3 text-sm text-gray-500">
+      <div v-if="results.length === 0 && !loading" class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
         No results found
       </div>
       <NuxtLink
@@ -80,7 +80,6 @@ watch(route, clear)
         :key="result.item?.id"
         :to="resultHref(result)"
         class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-        role="option"
         @click="clear"
       >
         <img
@@ -92,7 +91,7 @@ watch(route, clear)
         <div v-else class="w-12 h-9 bg-gray-100 dark:bg-gray-800 rounded shrink-0" />
         <div class="min-w-0">
           <p class="text-sm font-medium truncate">{{ result.video?.title }}</p>
-          <p class="text-xs text-gray-500 truncate">
+          <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
             {{ result.customTitle || result.playlist?.title }}
             <span v-if="result.video?.channelTitle"> · {{ result.video.channelTitle }}</span>
           </p>

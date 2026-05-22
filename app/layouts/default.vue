@@ -52,7 +52,7 @@ async function logout() {
         </NuxtLink>
 
         <div class="hidden lg:flex items-center gap-1.5">
-          <UNavigationMenu :items="items" />
+          <UNavigationMenu :items="items" aria-label="Main navigation" />
           <UButton variant="ghost" size="sm" @click="logout">
             Sign out
           </UButton>
@@ -61,7 +61,7 @@ async function logout() {
 
       <template #body>
         <AppSearchBar class="mb-2" />
-        <UNavigationMenu :items="items" orientation="vertical" class="-mx-2.5" />
+        <UNavigationMenu :items="items" orientation="vertical" class="-mx-2.5" aria-label="Mobile navigation" />
         <div class="border-t border-gray-200 dark:border-gray-700 mt-2 pt-2">
           <button
             class="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
