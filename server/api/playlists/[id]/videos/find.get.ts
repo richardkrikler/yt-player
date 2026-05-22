@@ -1,6 +1,6 @@
 import { db } from '../../../../db'
 import { playlistItems, videos, userPlaylists, playlistShares } from '../../../../db/schema'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, lt, count } from 'drizzle-orm'
 import { requireAuth } from '../../../../utils/requireRole'
 
 export default defineEventHandler(async (event) => {
@@ -29,5 +29,14 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!result) throw createError({ statusCode: 404, message: 'Video not found in playlist' })
-  return result
+
+  const [{ rank }] = await db
+    .select({ rank: count() })
+    .from(playlistItems)
+    .where(and(
+      eq(playlistItems.playlistId, playlistId),
+      lt(playlistItems.position, result.item.position),
+    ))
+
+  return { ...result, rank }
 })

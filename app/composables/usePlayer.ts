@@ -66,7 +66,9 @@ export function usePlayer(playlistId: Ref<string>) {
     const result = await $fetch<any>(`/api/playlists/${playlistId.value}/videos/find`, {
       query: { videoId },
     })
-    const targetPage = pageForPosition(result.item?.position ?? 0)
+    const targetPage = result.rank != null
+      ? Math.max(1, Math.ceil((result.rank + 1) / PLAYER_PAGE_SIZE))
+      : pageForPosition(result.item?.position ?? 0)
     await fetchPage(targetPage)
     play(result)
     return targetPage
