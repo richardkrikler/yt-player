@@ -27,9 +27,66 @@ const modes: { value: AutoPlayMode; label: string }[] = [
 const playerEl = ref<HTMLElement | null>(null)
 let player: any = null
 
-// Error codes 101 and 150 mean the video is blocked in embedded players
-// (age-restricted or embed-disabled). Show a fallback instead.
-const embedBlocked = ref(false)
+// YouTube IFrame API error codes:
+//   101 / 150 → age-restricted or embed disabled → show "Watch on YouTube"
+//   5         → restricted by network/workspace admin
+//   100       → video deleted or set to private
+type BlockReason = 'age' | 'unavailable' | null
+const blockReason = ref<BlockReason>(null)
+
+// ── Auto-skip countdown ───────────────────────────────────────────────
+const SKIP_MS = 5000
+const secondsLeft = ref(0)
+const skipCancelled = ref(false)
+const skipBarEl = ref<HTMLElement | null>(null)
+let skipTimeout: ReturnType<typeof setTimeout> | null = null
+let skipInterval: ReturnType<typeof setInterval> | null = null
+
+function clearSkipTimer() {
+  if (skipTimeout !== null) { clearTimeout(skipTimeout); skipTimeout = null }
+  if (skipInterval !== null) { clearInterval(skipInterval); skipInterval = null }
+  secondsLeft.value = 0
+  if (skipBarEl.value) {
+    skipBarEl.value.style.transition = 'none'
+    skipBarEl.value.style.width = '0%'
+  }
+}
+
+function cancelSkip() {
+  clearSkipTimer()
+  skipCancelled.value = true
+}
+
+function startSkipTimer() {
+  clearSkipTimer()
+  skipCancelled.value = false
+  if (!props.autoPlay) return
+  secondsLeft.value = Math.round(SKIP_MS / 1000)
+  // Let the DOM render the bar at 0% before starting the CSS transition
+  nextTick(() => {
+    if (!skipBarEl.value) return
+    skipBarEl.value.style.transition = 'none'
+    skipBarEl.value.style.width = '0%'
+    void skipBarEl.value.offsetWidth // force reflow so the reset is painted first
+    skipBarEl.value.style.transition = `width ${SKIP_MS}ms linear`
+    skipBarEl.value.style.width = '100%'
+  })
+  // Countdown text (1 s ticks)
+  skipInterval = setInterval(() => { secondsLeft.value = Math.max(0, secondsLeft.value - 1) }, 1000)
+  // Actual skip
+  skipTimeout = setTimeout(() => { clearSkipTimer(); onEnded() }, SKIP_MS)
+}
+
+watch(blockReason, (reason) => {
+  skipCancelled.value = false
+  if (reason && props.autoPlay) startSkipTimer()
+  else clearSkipTimer()
+})
+
+watch(() => props.autoPlay, (on) => {
+  if (on && blockReason.value) startSkipTimer()
+  else clearSkipTimer()
+})
 
 function onEnded() {
   if (!props.autoPlay) return
@@ -40,13 +97,16 @@ function onEnded() {
 
 function createPlayer() {
   if (!playerEl.value) return
-  embedBlocked.value = false
+  blockReason.value = null
   player = new (window as any).YT.Player(playerEl.value, {
     videoId: props.videoId,
     playerVars: { autoplay: 1, rel: 0, modestbranding: 1 },
     events: {
       onStateChange: (e: any) => { if (e.data === 0) onEnded() },
-      onError: (e: any) => { if (e.data === 101 || e.data === 150) embedBlocked.value = true },
+      onError: (e: any) => {
+        if (e.data === 101 || e.data === 150) blockReason.value = 'age'
+        else blockReason.value = 'unavailable' // 2, 5, 100, or any future code
+      },
     },
   })
 }
@@ -69,10 +129,10 @@ onMounted(async () => {
   createPlayer()
 })
 
-onUnmounted(() => player?.destroy())
+onUnmounted(() => { player?.destroy(); clearSkipTimer() })
 
 watch(() => props.videoId, (id) => {
-  embedBlocked.value = false
+  blockReason.value = null // triggers clearSkipTimer via the blockReason watcher
   if (player?.loadVideoById) player.loadVideoById(id)
 })
 </script>
@@ -81,31 +141,59 @@ watch(() => props.videoId, (id) => {
   <div class="flex flex-col gap-3">
     <div class="aspect-video w-full rounded-xl overflow-hidden bg-black relative">
       <div ref="playerEl" class="w-full h-full" />
-      <!-- Age-restricted / embed-blocked fallback -->
+      <!-- Playback error fallback — single root so <Transition> works correctly -->
       <Transition
         enter-active-class="transition-opacity duration-200"
         enter-from-class="opacity-0"
         enter-to-class="opacity-100"
       >
         <div
-          v-if="embedBlocked"
+          v-if="blockReason"
           class="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-gray-900/95 text-center px-6"
         >
-          <UIcon name="i-heroicons-lock-closed" class="size-10 text-gray-400" aria-hidden="true" />
-          <div>
-            <p class="text-sm font-medium text-gray-200">Age-restricted video</p>
-            <p class="text-xs text-gray-400 mt-1">This video can't be played in an embedded player.</p>
+          <template v-if="blockReason === 'age'">
+            <UIcon name="i-heroicons-lock-closed" class="size-10 text-gray-400" aria-hidden="true" />
+            <div>
+              <p class="text-sm font-medium text-gray-200">Age-restricted video</p>
+              <p class="text-xs text-gray-400 mt-1">This video can't be played in an embedded player.</p>
+            </div>
+            <UButton
+              :to="`https://www.youtube.com/watch?v=${videoId}&rco=1`"
+              target="_blank"
+              rel="noopener noreferrer"
+              icon="i-simple-icons-youtube"
+              color="error"
+              size="sm"
+            >
+              Watch on YouTube
+            </UButton>
+          </template>
+
+          <template v-else>
+            <UIcon name="i-heroicons-exclamation-circle" class="size-10 text-gray-500" aria-hidden="true" />
+            <div>
+              <p class="text-sm font-medium text-gray-200">Video unavailable</p>
+              <p class="text-xs text-gray-400 mt-1">This video may have been removed, set to private, or restricted by your network.</p>
+            </div>
+          </template>
+
+          <!-- Auto-skip countdown — shown for both error types when auto-play is on -->
+          <div v-if="autoPlay && !skipCancelled" class="w-full max-w-xs">
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-xs text-gray-500">Playing next in {{ secondsLeft }}s…</p>
+              <button
+                type="button"
+                class="text-gray-500 hover:text-gray-300 transition-colors"
+                aria-label="Cancel auto-skip"
+                @click="cancelSkip"
+              >
+                <UIcon name="i-heroicons-x-mark" class="size-4" aria-hidden="true" />
+              </button>
+            </div>
+            <div class="w-full h-1 bg-gray-700 rounded-full overflow-hidden">
+              <div ref="skipBarEl" class="h-full bg-gray-400 rounded-full" style="width:0%" />
+            </div>
           </div>
-          <UButton
-            :to="`https://www.youtube.com/watch?v=${videoId}&rco=1`"
-            target="_blank"
-            rel="noopener noreferrer"
-            icon="i-simple-icons-youtube"
-            color="error"
-            size="sm"
-          >
-            Watch on YouTube
-          </UButton>
         </div>
       </Transition>
     </div>
