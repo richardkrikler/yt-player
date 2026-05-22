@@ -290,7 +290,7 @@ watch(localPage, async (p) => {
           <PlayerIframe
             :video-id="activeVideo.id"
             :title="activeVideo.title"
-            :channel-title="activeVideo.channel_title"
+            :channel-title="activeVideo.channelTitle"
             v-model:auto-play="autoPlay"
             v-model:auto-play-mode="autoPlayMode"
             @previous="previous"
