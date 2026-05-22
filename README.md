@@ -135,7 +135,7 @@ Forgejo Actions (`.forgejo/workflows/release.yml`) triggers on every `v*` tag:
 
 The resulting asset is available at:
 ```
-http://git.home.richardkrikler.at:3000/richardkrikler/yt-player/releases/download/<tag>/yt-player.tar.gz
+YOUR_FORGEJO_URL/YOUR_FORGEJO_REPO/releases/download/<tag>/yt-player.tar.gz
 ```
 
 ### Updating an installed instance
@@ -155,7 +155,7 @@ Stops the service, downloads the latest release tarball from Forgejo, extracts i
 ### Install (one-liner on the Proxmox host)
 
 ```bash
-bash -c "$(curl -fsSL http://git.home.richardkrikler.at:3000/richardkrikler/yt-player/raw/branch/main/proxmox/ct/yt-player.sh)"
+bash -c "$(curl -fsSL YOUR_FORGEJO_URL/YOUR_FORGEJO_REPO/raw/branch/main/proxmox/ct/yt-player.sh)"
 ```
 
 Creates a Debian 13 LXC, installs Node.js 24, Caddy (HTTPS with internal CA), and the latest release. Defaults:
@@ -184,7 +184,7 @@ Fill in the Google credentials (see [Environment Variables](#environment-variabl
 systemctl start yt-player
 ```
 
-The app is available at `https://yt-player.home.richardkrikler.at` — Caddy handles TLS with its internal CA. Point `yt-player.home.richardkrikler.at` → LXC IP in AdGuard Home (or your local DNS).
+The app is available at `https://YOUR_DOMAIN` — Caddy handles TLS with its internal CA. Point `YOUR_DOMAIN` → LXC IP in AdGuard Home (or your local DNS).
 
 **Paths inside the LXC:**
 
@@ -196,7 +196,7 @@ The app is available at `https://yt-player.home.richardkrikler.at` — Caddy han
 | `/opt/yt-player/version` | Installed version tag |
 | `/etc/caddy/Caddyfile` | Caddy reverse proxy config |
 
-The default Caddyfile uses `yt-player.home.richardkrikler.at`. Caddy automatically handles HTTP→HTTPS redirect when a hostname is specified — no explicit `:80` block needed.
+The default Caddyfile uses `YOUR_DOMAIN`. Caddy automatically handles HTTP→HTTPS redirect when a hostname is specified — no explicit `:80` block needed.
 
 ### Trust Caddy's Root CA (once per device)
 

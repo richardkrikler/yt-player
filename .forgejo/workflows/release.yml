@@ -32,7 +32,7 @@ jobs:
       - uses: https://data.forgejo.org/actions/forgejo-release@v2.11.3
         with:
           direction: upload
-          url: http://git.home.richardkrikler.at:3000
+          url: ${{ forge.server_url }}
           repo: ${{ forge.repository }}
           tag: ${{ forge.ref_name }}
 

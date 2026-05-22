@@ -3,8 +3,19 @@ set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 export LC_ALL=C
 
-FORGEJO="http://git.home.richardkrikler.at:3000"
-REPO="richardkrikler/yt-player"
+# Accept from env (when invoked via ct/yt-player.sh) or prompt interactively
+if [[ -z "${FORGEJO:-}" ]]; then
+  read -rp "Forgejo base URL (e.g. http://git.example.com:3000): " FORGEJO
+fi
+if [[ -z "${REPO:-}" ]]; then
+  read -rp "Repository path (e.g. user/yt-player): " REPO
+fi
+if [[ -z "${DOMAIN:-}" ]]; then
+  read -rp "App domain (e.g. yt-player.home.example.com): " DOMAIN
+fi
+[[ -z "$FORGEJO" ]] && { echo "ERROR: FORGEJO is required" >&2; exit 1; }
+[[ -z "$REPO"    ]] && { echo "ERROR: REPO is required" >&2; exit 1; }
+[[ -z "$DOMAIN"  ]] && { echo "ERROR: DOMAIN is required" >&2; exit 1; }
 
 echo "Updating OS..."
 apt-get update -qq && apt-get upgrade -y -qq
@@ -75,8 +86,8 @@ EOF
 systemctl enable -q yt-player
 
 echo "Configuring Caddy..."
-cat >/etc/caddy/Caddyfile <<'EOF'
-yt-player.home.richardkrikler.at {
+cat >/etc/caddy/Caddyfile <<EOF
+${DOMAIN} {
     reverse_proxy localhost:3000
     tls internal
 }
@@ -85,23 +96,23 @@ systemctl enable -q caddy
 systemctl reload-or-restart caddy
 
 echo "Creating update command..."
-cat >/usr/bin/update <<'SCRIPT'
+cat >/usr/bin/update <<SCRIPT
 #!/usr/bin/env bash
 set -euo pipefail
-FORGEJO="http://git.home.richardkrikler.at:3000"
-REPO="richardkrikler/yt-player"
-CURRENT=$(cat /opt/yt-player/version 2>/dev/null || echo "none")
-LATEST=$(curl -fsSL "${FORGEJO}/api/v1/repos/${REPO}/releases/latest" | jq -r '.tag_name')
-[[ -z "$LATEST" || "$LATEST" == "null" ]] && { echo "ERROR: Could not reach Forgejo" >&2; exit 1; }
-[[ "$CURRENT" == "$LATEST" ]] && { echo "Already at ${LATEST} — nothing to do."; exit 0; }
-echo "Updating yt-player ${CURRENT} → ${LATEST}..."
+FORGEJO="${FORGEJO}"
+REPO="${REPO}"
+CURRENT=\$(cat /opt/yt-player/version 2>/dev/null || echo "none")
+LATEST=\$(curl -fsSL "\${FORGEJO}/api/v1/repos/\${REPO}/releases/latest" | jq -r '.tag_name')
+[[ -z "\$LATEST" || "\$LATEST" == "null" ]] && { echo "ERROR: Could not reach Forgejo" >&2; exit 1; }
+[[ "\$CURRENT" == "\$LATEST" ]] && { echo "Already at \${LATEST} — nothing to do."; exit 0; }
+echo "Updating yt-player \${CURRENT} → \${LATEST}..."
 systemctl stop yt-player
-curl -fsSL "${FORGEJO}/${REPO}/releases/download/${LATEST}/yt-player.tar.gz" \
+curl -fsSL "\${FORGEJO}/\${REPO}/releases/download/\${LATEST}/yt-player.tar.gz" \
   | tar -xz -C /opt/yt-player/app
 chown -R yt-player:yt-player /opt/yt-player/app
-echo "$LATEST" >/opt/yt-player/version
+echo "\$LATEST" >/opt/yt-player/version
 systemctl start yt-player
-echo "Done — now at ${LATEST}."
+echo "Done — now at \${LATEST}."
 SCRIPT
 chmod +x /usr/bin/update
 
@@ -119,5 +130,5 @@ echo "Install complete (${LATEST})."
 echo "  Secrets and DB path are pre-configured."
 echo "  Add Google API credentials to /opt/yt-player/.env, then:"
 echo "    systemctl start yt-player"
-echo "  Access: https://yt-player.home.richardkrikler.at  (trust Caddy CA — see README)"
+echo "  Access: https://${DOMAIN}  (trust Caddy CA — see README)"
 echo ""
