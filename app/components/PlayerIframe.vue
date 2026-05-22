@@ -27,6 +27,10 @@ const modes: { value: AutoPlayMode; label: string }[] = [
 const playerEl = ref<HTMLElement | null>(null)
 let player: any = null
 
+// Error codes 101 and 150 mean the video is blocked in embedded players
+// (age-restricted or embed-disabled). Show a fallback instead.
+const embedBlocked = ref(false)
+
 function onEnded() {
   if (!props.autoPlay) return
   if (props.autoPlayMode === 'random') emit('random')
@@ -36,11 +40,13 @@ function onEnded() {
 
 function createPlayer() {
   if (!playerEl.value) return
+  embedBlocked.value = false
   player = new (window as any).YT.Player(playerEl.value, {
     videoId: props.videoId,
     playerVars: { autoplay: 1, rel: 0, modestbranding: 1 },
     events: {
       onStateChange: (e: any) => { if (e.data === 0) onEnded() },
+      onError: (e: any) => { if (e.data === 101 || e.data === 150) embedBlocked.value = true },
     },
   })
 }
@@ -66,14 +72,42 @@ onMounted(async () => {
 onUnmounted(() => player?.destroy())
 
 watch(() => props.videoId, (id) => {
+  embedBlocked.value = false
   if (player?.loadVideoById) player.loadVideoById(id)
 })
 </script>
 
 <template>
   <div class="flex flex-col gap-3">
-    <div class="aspect-video w-full rounded-xl overflow-hidden bg-black">
+    <div class="aspect-video w-full rounded-xl overflow-hidden bg-black relative">
       <div ref="playerEl" class="w-full h-full" />
+      <!-- Age-restricted / embed-blocked fallback -->
+      <Transition
+        enter-active-class="transition-opacity duration-200"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+      >
+        <div
+          v-if="embedBlocked"
+          class="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-gray-900/95 text-center px-6"
+        >
+          <UIcon name="i-heroicons-lock-closed" class="size-10 text-gray-400" aria-hidden="true" />
+          <div>
+            <p class="text-sm font-medium text-gray-200">Age-restricted video</p>
+            <p class="text-xs text-gray-400 mt-1">This video can't be played in an embedded player.</p>
+          </div>
+          <UButton
+            :to="`https://www.youtube.com/watch?v=${videoId}&rco=1`"
+            target="_blank"
+            rel="noopener noreferrer"
+            icon="i-simple-icons-youtube"
+            color="error"
+            size="sm"
+          >
+            Watch on YouTube
+          </UButton>
+        </div>
+      </Transition>
     </div>
 
     <div class="flex items-start justify-between gap-4">
