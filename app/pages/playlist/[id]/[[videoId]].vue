@@ -323,6 +323,7 @@ watch(localPage, async (p) => {
             :video-id="activeVideo.id"
             :title="activeVideo.title"
             :channel-title="activeVideo.channelTitle"
+            :channel-id="activeVideo.channelId"
             v-model:auto-play="autoPlay"
             v-model:auto-play-mode="autoPlayMode"
             @previous="previous"

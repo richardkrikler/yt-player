@@ -5,6 +5,7 @@ const props = defineProps<{
   videoId: string
   title?: string | null
   channelTitle?: string | null
+  channelId?: string | null
   autoPlay: boolean
   autoPlayMode: AutoPlayMode
 }>()
@@ -201,7 +202,16 @@ watch(() => props.videoId, (id) => {
     <div class="flex items-start justify-between gap-4">
       <div class="min-w-0">
         <h2 v-if="title" class="font-semibold text-base leading-snug line-clamp-2">{{ title }}</h2>
-        <p v-if="channelTitle" class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ channelTitle }}</p>
+        <p v-if="channelTitle" class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+          <a
+            v-if="channelId"
+            :href="`https://www.youtube.com/channel/${channelId}`"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-1 hover:underline"
+          >{{ channelTitle }}<UIcon name="i-heroicons-arrow-top-right-on-square" class="size-3 shrink-0" aria-hidden="true" /></a>
+          <template v-else>{{ channelTitle }}</template>
+        </p>
       </div>
     </div>
 
