@@ -271,6 +271,16 @@ watch(localPage, async (p) => {
           Private
         </UBadge>
         <div class="ml-auto flex gap-2">
+          <UButton
+            size="sm"
+            variant="ghost"
+            icon="i-heroicons-arrow-top-right-on-square"
+            :to="`https://www.youtube.com/playlist?list=${playlistId}`"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            YouTube
+          </UButton>
           <UButton size="sm" variant="ghost" icon="i-heroicons-share" @click="showShare = true">
             Share
           </UButton>
