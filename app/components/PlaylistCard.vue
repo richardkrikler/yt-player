@@ -95,9 +95,9 @@ function activateTransition() {
         <UBadge
           v-if="playlist.privacyStatus === 'private'"
           class="absolute top-2 right-2"
-          color="orange"
-          variant="solid"
-          size="xs"
+          color="neutral"
+          variant="outline"
+          size="sm"
         >
           Private
         </UBadge>

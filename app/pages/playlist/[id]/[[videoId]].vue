@@ -267,7 +267,7 @@ watch(localPage, async (p) => {
           <h1 ref="h1El" class="font-bold text-lg truncate">{{ playlist?.customTitle || playlist?.title }}</h1>
           <p v-if="playlist?.customTitle" class="text-xs text-gray-400 truncate -mt-0.5">{{ playlist?.title }}</p>
         </div>
-        <UBadge v-if="playlist?.privacyStatus === 'private'" color="orange" variant="soft" size="xs">
+        <UBadge v-if="playlist?.privacyStatus === 'private'" color="orange" variant="soft" size="sm">
           Private
         </UBadge>
         <div class="ml-auto flex gap-2">
