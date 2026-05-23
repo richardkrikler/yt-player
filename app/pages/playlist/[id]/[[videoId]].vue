@@ -325,26 +325,28 @@ watch(localPage, async (p) => {
       :actions="[{ label: 'Reconnect YouTube', to: '/settings', icon: 'i-simple-icons-youtube' }]"
     />
 
-    <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 lg:flex-1 lg:min-h-0 mt-4 lg:mt-0">
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] lg:grid-rows-[1fr] gap-6 lg:flex-1 lg:min-h-0 mt-4 lg:mt-0">
       <!-- Player column -->
-      <div :class="{ 'hidden lg:block': mobileTab !== 'player' }">
-        <div v-if="activeVideo">
-          <PlayerIframe
-            :video-id="activeVideo.id"
-            :title="activeVideo.title"
-            :channel-title="activeVideo.channelTitle"
-            :channel-id="activeVideo.channelId"
-            v-model:auto-play="autoPlay"
-            v-model:auto-play-mode="autoPlayMode"
-            @previous="previous"
-            @next="next"
-            @random="random"
-            @similar="playNextSimilar"
-          />
+      <div class="lg:flex lg:flex-col lg:min-h-0" :class="{ 'hidden lg:flex': mobileTab !== 'player' }">
+        <div v-if="activeVideo" class="lg:flex lg:flex-col lg:min-h-0">
+          <div class="lg:shrink-0">
+            <PlayerIframe
+              :video-id="activeVideo.id"
+              :title="activeVideo.title"
+              :channel-title="activeVideo.channelTitle"
+              :channel-id="activeVideo.channelId"
+              v-model:auto-play="autoPlay"
+              v-model:auto-play-mode="autoPlayMode"
+              @previous="previous"
+              @next="next"
+              @random="random"
+              @similar="playNextSimilar"
+            />
+          </div>
 
           <!-- More like this -->
-          <div class="mt-3">
-            <div class="flex items-center gap-2">
+          <div class="mt-3 lg:flex lg:flex-col lg:min-h-0">
+            <div class="flex items-center gap-2 lg:shrink-0">
               <button
                 type="button"
                 class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
@@ -386,7 +388,7 @@ watch(localPage, async (p) => {
               leave-from-class="opacity-100 translate-y-0"
               leave-to-class="opacity-0 -translate-y-1"
             >
-              <div v-if="showSimilar" class="mt-2">
+              <div v-if="showSimilar" class="mt-2 lg:overflow-y-auto lg:min-h-0">
                 <div v-if="similarLoading" class="flex items-center gap-2 py-4 text-sm text-gray-400">
                   <UIcon name="i-lucide-loader-circle" class="size-4 animate-spin" />
                   Finding similar videos…
