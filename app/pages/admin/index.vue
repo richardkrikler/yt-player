@@ -70,7 +70,7 @@ async function refreshPlaylist(id: string) {
               <td class="py-2 pr-4">{{ u.email }}</td>
               <td class="py-2 pr-4 text-gray-500 dark:text-gray-400">{{ u.displayName ?? '—' }}</td>
               <td class="py-2 pr-4">
-                <UBadge :color="u.role === 'admin' ? 'primary' : 'gray'" variant="soft" size="xs">
+                <UBadge :color="u.role === 'admin' ? 'primary' : 'gray'" variant="soft" size="sm">
                   {{ u.role }}
                 </UBadge>
               </td>
@@ -136,7 +136,7 @@ async function refreshPlaylist(id: string) {
                 <UBadge
                   :color="row.playlist.privacyStatus === 'private' ? 'orange' : 'gray'"
                   variant="soft"
-                  size="xs"
+                  size="sm"
                 >
                   {{ row.playlist.privacyStatus ?? '?' }}
                 </UBadge>

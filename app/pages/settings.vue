@@ -31,7 +31,7 @@ async function disconnect() {
         <div class="flex justify-between">
           <dt class="text-gray-500 dark:text-gray-400">Role</dt>
           <dd>
-            <UBadge :color="user?.role === 'admin' ? 'primary' : 'gray'" variant="soft" size="xs">
+            <UBadge :color="user?.role === 'admin' ? 'primary' : 'gray'" variant="soft" size="sm">
               {{ user?.role }}
             </UBadge>
           </dd>
