@@ -8,11 +8,14 @@ A self-hosted, multi-user YouTube playlist manager. Import private and public pl
 
 - **Private & public playlists** — import your own YouTube playlists via OAuth, or add any public playlist by URL
 - **Local cache** — video metadata stored in SQLite; force-refresh on demand
-- **Playback** — embedded YouTube iframe player with next / previous / random navigation
+- **Playback** — embedded YouTube iframe player with next / previous / random / similar navigation; age-restricted videos fall back to a "Watch on YouTube" link
+- **External links** — playlist header links to the YouTube playlist; channel name links to the YouTube channel
+- **"More like this"** — tag-based similar video suggestions, scrollable on desktop
 - **Search** — full-text search across titles, descriptions, tags, and channel names
 - **Sharing** — share playlists with other registered users
 - **Role-based access** — `admin` (first registrant) and `user` roles
-- **Self-hosted** — runs on a Proxmox LXC via Docker Compose with Caddy reverse proxy
+- **PWA** — installable as a standalone home screen app on iOS and Android via "Add to Home Screen" in Safari
+- **Self-hosted** — runs on a Proxmox LXC with Caddy (HTTPS via internal CA)
 
 ---
 
@@ -202,16 +205,22 @@ The default Caddyfile uses `YOUR_DOMAIN`. Caddy automatically handles HTTP→HTT
 
 ```bash
 # Copy the CA cert from the LXC to your machine
-scp root@<LXC_IP>:/data/caddy/pki/authorities/local/root.crt ~/caddy-home-ca.crt
+scp root@<LXC_IP>:/var/lib/caddy/.local/share/caddy/pki/authorities/local/root.crt ~/caddy-home-ca.crt
 ```
 
 | Device | Steps |
 |---|---|
-| macOS | Double-click → Keychain Access → set to **Always Trust** |
+| macOS | `sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain caddy-home-ca.crt` — or double-click → Keychain Access → **Always Trust** |
 | Windows | Double-click → Install → **Trusted Root Certification Authorities** |
 | Linux | `cp caddy-home-ca.crt /usr/local/share/ca-certificates/ && update-ca-certificates` |
 | Android | Settings → Security → **Install CA certificate** |
-| iOS | AirDrop or email → Settings → **Profile Downloaded** → install → General → About → Certificate Trust Settings → enable |
+| iOS | AirDrop or open in Safari → Settings → **Profile Downloaded** → install → **General → About → Certificate Trust Settings** → enable |
+
+### Install as a PWA (iOS / Android)
+
+After trusting the CA, open the site in **Safari** (iOS) or **Chrome** (Android) and use **Share → Add to Home Screen**. The app opens full-screen with no browser chrome.
+
+> iOS requires the CA to be trusted *before* installing the PWA — otherwise the icon will show a certificate error on launch.
 
 ---
 
@@ -260,6 +269,12 @@ yt-player/
 │       ├── youtube.ts          # YouTube API client + URL parser
 │       ├── cache.ts            # TTL helpers (metadata: 24h, videos: 6h)
 │       └── requireRole.ts      # requireAuth / requireAdmin guards
+├── public/
+│   ├── favicon.svg             # SVG icon (browser tab)
+│   ├── apple-touch-icon.png    # 180×180 — iOS home screen icon
+│   ├── icon-192.png            # PWA manifest icon
+│   ├── icon-512.png            # PWA manifest icon
+│   └── manifest.webmanifest    # Web App Manifest (PWA)
 ├── types/
 │   └── auth.d.ts               # nuxt-auth-utils User type augmentation
 ├── .env.example

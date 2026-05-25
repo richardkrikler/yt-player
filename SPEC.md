@@ -14,11 +14,14 @@ A self-hosted, multi-user YouTube playlist manager. Users authenticate via Googl
 | Public playlist import | Paste any YouTube playlist URL; app extracts the ID and imports as public |
 | Metadata cache | Playlist title & video count cached; force-refresh available |
 | Video list fetch | Full paginated video list fetched on demand; cached per playlist |
-| Playback | Embedded YouTube iframe player with next/previous/random navigation |
+| Playback | Embedded YouTube iframe player with next/previous/random/similar navigation; channel title links to YouTube channel; age-restricted videos show a "Watch on YouTube" fallback |
+| "More like this" | Tag-based similar video suggestions panel; scrollable on desktop without affecting layout |
+| External links | Playlist header links directly to the YouTube playlist; channel name links to the YouTube channel |
 | Search | Full-text search across title, description, tags, channel name |
 | Sharing | Users can share their playlists with other registered users |
 | Multi-user | Role-based access: `admin` and `user` |
-| Deployment | Local dev → Proxmox LXC container via Docker Compose |
+| PWA | Web App Manifest + Apple touch icons + meta tags; installable as a standalone home screen app on iOS and Android via "Add to Home Screen" in Safari |
+| Deployment | Local dev → Proxmox LXC container via Caddy (HTTPS with internal CA) |
 
 ---
 
@@ -540,8 +543,7 @@ In Google Cloud Console → Credentials → your OAuth client → add:
 
 ## Future Work / Nice-to-Have
 
-- [ ] Video list pagination in UI (virtual scroll vs pages)
 - [ ] Token refresh: automatic background refresh vs on-demand
 - [ ] Admin panel: global cache TTL overrides
-- [ ] Playlist reorder / custom sort in UI
 - [ ] Watch history per user
+- [ ] PWA service worker for offline support / background caching
