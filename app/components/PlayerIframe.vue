@@ -201,7 +201,14 @@ watch(() => props.videoId, (id) => {
 
     <div class="flex items-start justify-between gap-4">
       <div class="min-w-0">
-        <h2 v-if="title" class="font-semibold text-base leading-snug line-clamp-2">{{ title }}</h2>
+        <h2 v-if="title" class="font-semibold text-base leading-snug line-clamp-2">
+          <a
+            :href="`https://www.youtube.com/watch?v=${videoId}`"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="group inline-flex items-center gap-1 hover:underline"
+          >{{ title }}<UIcon name="i-heroicons-arrow-top-right-on-square" class="size-3 shrink-0 opacity-0 group-hover:opacity-100" aria-hidden="true" /></a>
+        </h2>
         <p v-if="channelTitle" class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
           <a
             v-if="channelId"
