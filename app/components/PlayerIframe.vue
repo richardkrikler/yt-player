@@ -215,8 +215,8 @@ watch(() => props.videoId, (id) => {
             :href="`https://www.youtube.com/channel/${channelId}`"
             target="_blank"
             rel="noopener noreferrer"
-            class="inline-flex items-center gap-1 hover:underline"
-          >{{ channelTitle }}<UIcon name="i-heroicons-arrow-top-right-on-square" class="size-3 shrink-0" aria-hidden="true" /></a>
+            class="group inline-flex items-center gap-1 hover:underline"
+          >{{ channelTitle }}<UIcon name="i-heroicons-arrow-top-right-on-square" class="size-3 shrink-0 opacity-0 group-hover:opacity-100" aria-hidden="true" /></a>
           <template v-else>{{ channelTitle }}</template>
         </p>
       </div>
