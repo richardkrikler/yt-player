@@ -145,6 +145,7 @@ useShortcuts([
     autoPlayMode.value = order[(order.indexOf(autoPlayMode.value) + 1) % order.length]
   } },
   { key: 's',          handler: () => { if (activeVideo.value) playNextSimilar() } },
+  { key: 'o',          handler: () => { if (activeVideo.value) window.open(`https://www.youtube.com/watch?v=${activeVideo.value.id}`, '_blank', 'noopener,noreferrer') } },
   { key: 'ArrowLeft',  handler: () => activeVideo.value && playerRef.value?.seekBack(5) },
   { key: 'ArrowRight', handler: () => activeVideo.value && playerRef.value?.seekForward(5) },
 ])

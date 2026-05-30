@@ -25,6 +25,7 @@ const sections = [
       { combos: [['N']], description: 'Next (follows autoplay mode)' },
       { combos: [['A']], description: 'Toggle autoplay on / off' },
       { combos: [['M']], description: 'Cycle autoplay mode' },
+      { combos: [['O']], description: 'Open video on YouTube' },
     ],
   },
 ]
