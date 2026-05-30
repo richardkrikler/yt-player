@@ -138,6 +138,15 @@ onMounted(async () => {
 
 onUnmounted(() => { player?.destroy(); clearSkipTimer() })
 
+defineExpose({
+  playPause: () => {
+    if (!player) return
+    player.getPlayerState() === 1 ? player.pauseVideo() : player.playVideo()
+  },
+  seekBack: (s = 10) => player?.seekTo(Math.max(0, player.getCurrentTime() - s), true),
+  seekForward: (s = 10) => player?.seekTo(player.getCurrentTime() + s, true),
+})
+
 watch(() => props.videoId, (id) => {
   blockReason.value = null // triggers clearSkipTimer via the blockReason watcher
   if (player?.loadVideoById) player.loadVideoById(id)

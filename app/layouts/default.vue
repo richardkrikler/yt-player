@@ -3,6 +3,11 @@ import type { NavigationMenuItem } from '@nuxt/ui'
 
 const { user, clear } = useUserSession()
 
+const desktopSearchBar = ref<{ focus: () => void } | null>(null)
+useShortcuts([
+  { key: 'k', meta: true, allowInInput: true, handler: () => desktopSearchBar.value?.focus() },
+])
+
 const items = computed<NavigationMenuItem[]>(() => [
   {
     label: 'Shared',
@@ -38,7 +43,7 @@ async function logout() {
 
       <!-- Search bar: desktop only (mobile gets an icon instead) -->
       <div class="hidden lg:flex flex-2 justify-center px-4">
-        <AppSearchBar class="max-w-2xl w-full" />
+        <AppSearchBar ref="desktopSearchBar" class="max-w-2xl w-full" />
       </div>
 
       <template #right>

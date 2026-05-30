@@ -121,6 +121,17 @@ const listEl = ref<HTMLElement | null>(null)
 
 const activeVideo = computed(() => currentVideo.value?.video ?? currentVideo.value)
 
+const playerRef = ref<{ playPause: () => void; seekBack: (s?: number) => void; seekForward: (s?: number) => void } | null>(null)
+useShortcuts([
+  { key: ' ',          handler: () => activeVideo.value && playerRef.value?.playPause() },
+  { key: 'k',          handler: () => activeVideo.value && playerRef.value?.playPause() },
+  { key: 'j',          handler: () => activeVideo.value && playerRef.value?.seekBack() },
+  { key: 'l',          handler: () => activeVideo.value && playerRef.value?.seekForward() },
+  { key: 'n', shift: true, handler: () => { if (activeVideo.value) next() } },
+  { key: 'ArrowLeft',  handler: () => activeVideo.value && playerRef.value?.seekBack(5) },
+  { key: 'ArrowRight', handler: () => activeVideo.value && playerRef.value?.seekForward(5) },
+])
+
 // Record history + re-fetch similar when video changes
 watch(activeVideo, (newVideo, oldVideo) => {
   if (oldVideo?.id) pushHistory(oldVideo.id)
@@ -331,6 +342,7 @@ watch(localPage, async (p) => {
         <div v-if="activeVideo" class="lg:flex lg:flex-col lg:min-h-0">
           <div class="lg:shrink-0">
             <PlayerIframe
+              ref="playerRef"
               :video-id="activeVideo.id"
               :title="activeVideo.title"
               :channel-title="activeVideo.channelTitle"

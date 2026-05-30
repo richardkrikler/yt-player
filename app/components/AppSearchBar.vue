@@ -34,6 +34,14 @@ function onKeydown(e: KeyboardEvent) {
 }
 
 watch(route, clear)
+
+defineExpose({
+  focus: () => {
+    const input = containerEl.value?.querySelector('input')
+    input?.focus()
+    input?.select()
+  },
+})
 </script>
 
 <template>
