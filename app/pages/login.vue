@@ -37,7 +37,7 @@ async function login() {
     <form class="flex flex-col gap-4" @submit.prevent="login">
       <div class="flex flex-col gap-1.5">
         <label for="email" class="text-sm font-medium">Email</label>
-        <UInput id="email" v-model="email" type="email" autocomplete="email" required />
+        <UInput id="email" v-model="email" type="email" autocomplete="username" required />
       </div>
       <div class="flex flex-col gap-1.5">
         <label for="password" class="text-sm font-medium">Password</label>
