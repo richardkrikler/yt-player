@@ -6,6 +6,7 @@ const { user, clear } = useUserSession()
 const desktopSearchBar = ref<{ focus: () => void } | null>(null)
 useShortcuts([
   { key: 'k', meta: true, allowInInput: true, handler: () => desktopSearchBar.value?.focus() },
+  { key: '/', handler: () => desktopSearchBar.value?.focus() },
 ])
 
 const items = computed<NavigationMenuItem[]>(() => [

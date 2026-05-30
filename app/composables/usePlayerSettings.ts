@@ -1,6 +1,6 @@
 export type AutoPlayMode = 'next' | 'random' | 'similar'
 
-const HISTORY_MAX = 5
+const HISTORY_MAX = 10
 
 export interface PlayHistoryEntry { id: string, playedAt: number }
 

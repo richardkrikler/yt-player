@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { AutoPlayMode } from '~/composables/usePlayerSettings'
 definePageMeta({ viewTransition: { fromTypes: ['vt-back'] } })
 const route = useRoute()
 const router = useRouter()
@@ -87,7 +88,7 @@ async function playNextSimilar() {
 
     let pick: any
     if (fresh.length > 0) {
-      pick = fresh[Math.floor(Math.random() * fresh.length)]
+      pick = fresh[0]
     }
     else {
       // All suggestions recently played — pick the least recently played
@@ -121,13 +122,29 @@ const listEl = ref<HTMLElement | null>(null)
 
 const activeVideo = computed(() => currentVideo.value?.video ?? currentVideo.value)
 
+function advanceByMode() {
+  if (!activeVideo.value) return
+  if (autoPlayMode.value === 'random') random()
+  else if (autoPlayMode.value === 'similar') playNextSimilar()
+  else next()
+}
+
 const playerRef = ref<{ playPause: () => void; seekBack: (s?: number) => void; seekForward: (s?: number) => void } | null>(null)
 useShortcuts([
   { key: ' ',          handler: () => activeVideo.value && playerRef.value?.playPause() },
   { key: 'k',          handler: () => activeVideo.value && playerRef.value?.playPause() },
   { key: 'j',          handler: () => activeVideo.value && playerRef.value?.seekBack() },
   { key: 'l',          handler: () => activeVideo.value && playerRef.value?.seekForward() },
+  { key: 'n',          handler: advanceByMode },
   { key: 'n', shift: true, handler: () => { if (activeVideo.value) next() } },
+  { key: 'p', shift: true, handler: () => { if (activeVideo.value) previous() } },
+  { key: 'r',          handler: () => random() },
+  { key: 'a',          handler: () => { if (activeVideo.value) { autoPlay.value = !autoPlay.value } } },
+  { key: 'm',          handler: () => {
+    const order: AutoPlayMode[] = ['next', 'random', 'similar']
+    autoPlayMode.value = order[(order.indexOf(autoPlayMode.value) + 1) % order.length]
+  } },
+  { key: 's',          handler: () => { if (activeVideo.value) playNextSimilar() } },
   { key: 'ArrowLeft',  handler: () => activeVideo.value && playerRef.value?.seekBack(5) },
   { key: 'ArrowRight', handler: () => activeVideo.value && playerRef.value?.seekForward(5) },
 ])
