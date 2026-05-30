@@ -4,9 +4,11 @@ import type { NavigationMenuItem } from '@nuxt/ui'
 const { user, clear } = useUserSession()
 
 const desktopSearchBar = ref<{ focus: () => void } | null>(null)
+const showShortcuts = ref(false)
 useShortcuts([
   { key: 'k', meta: true, allowInInput: true, handler: () => desktopSearchBar.value?.focus() },
   { key: '/', handler: () => desktopSearchBar.value?.focus() },
+  { key: '?', shift: true, handler: () => { showShortcuts.value = !showShortcuts.value } },
 ])
 
 const items = computed<NavigationMenuItem[]>(() => [
@@ -42,8 +44,17 @@ async function logout() {
     >
       <template #title>YT Player</template>
 
-      <!-- Search bar: desktop only (mobile gets an icon instead) -->
-      <div class="hidden lg:flex flex-2 justify-center px-4">
+      <!-- Search bar + shortcuts: desktop only -->
+      <div class="hidden lg:flex items-center gap-3 flex-2 px-4">
+        <UButton
+          size="sm"
+          variant="ghost"
+          icon="i-lucide-keyboard"
+          class="shrink-0"
+          @click="showShortcuts = true"
+        >
+          Shortcuts
+        </UButton>
         <AppSearchBar ref="desktopSearchBar" class="max-w-2xl w-full" />
       </div>
 
@@ -83,5 +94,7 @@ async function logout() {
     <main class="flex-1 lg:min-h-0 lg:overflow-y-auto max-w-7xl w-full mx-auto px-4 py-6">
       <slot />
     </main>
+
+    <ShortcutsModal v-model:open="showShortcuts" />
   </div>
 </template>
