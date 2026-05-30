@@ -6,9 +6,15 @@ const props = defineProps<{
   title?: string | null
   channelTitle?: string | null
   channelId?: string | null
+  publishedAt?: number | null
   autoPlay: boolean
   autoPlayMode: AutoPlayMode
 }>()
+
+const publishedDate = computed(() => {
+  if (!props.publishedAt) return null
+  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(props.publishedAt))
+})
 
 const emit = defineEmits<{
   previous: []
@@ -209,15 +215,18 @@ watch(() => props.videoId, (id) => {
             class="group inline-flex items-center gap-1 hover:underline"
           >{{ title }}<UIcon name="i-heroicons-arrow-top-right-on-square" class="size-3 shrink-0 opacity-0 group-hover:opacity-100" aria-hidden="true" /></a>
         </h2>
-        <p v-if="channelTitle" class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-          <a
-            v-if="channelId"
-            :href="`https://www.youtube.com/channel/${channelId}`"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="group inline-flex items-center gap-1 hover:underline"
-          >{{ channelTitle }}<UIcon name="i-heroicons-arrow-top-right-on-square" class="size-3 shrink-0 opacity-0 group-hover:opacity-100" aria-hidden="true" /></a>
-          <template v-else>{{ channelTitle }}</template>
+        <p v-if="channelTitle || publishedDate" class="text-sm text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-2">
+          <template v-if="channelTitle">
+            <a
+              v-if="channelId"
+              :href="`https://www.youtube.com/channel/${channelId}`"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="group inline-flex items-center hover:underline"
+            >{{ channelTitle }}<UIcon name="i-heroicons-arrow-top-right-on-square" class="size-3 w-0 overflow-hidden group-hover:w-3 group-hover:ml-1 transition-[width,margin] duration-150" aria-hidden="true" /></a>
+            <template v-else>{{ channelTitle }}</template>
+          </template>
+          <span v-if="publishedDate" class="text-gray-500 dark:text-gray-400">{{ publishedDate }}</span>
         </p>
       </div>
     </div>
